@@ -28,7 +28,7 @@ Track story completion status. Update this file as features are implemented.
 | Story | Status | Notes |
 |-------|--------|-------|
 | Story 2: Create Accounts | ✅ | API routes, Zod validators, form, page complete |
-| Story 3: Default Categories | ⬜ | |
+| Story 3: Default Categories | ✅ | Seed API, CRUD routes, form, page complete |
 | Story 4: Manual Transaction Entry | ⬜ | |
 | Story 6: Transaction History | ⬜ | |
 
@@ -105,7 +105,7 @@ Track story completion status. Update this file as features are implemented.
 | next_auth.accounts | ✅ | N/A | Managed by NextAuth |
 | next_auth.sessions | ✅ | N/A | Managed by NextAuth |
 | public.accounts | ✅ | ✅ | Migration: supabase/migrations/001_accounts.sql |
-| public.categories | ⬜ | ⬜ | |
+| public.categories | ✅ | ✅ | Migration: supabase/migrations/002_categories.sql |
 | public.transactions | ⬜ | ⬜ | |
 | public.budgets | ⬜ | ⬜ | |
 | public.goals | ⬜ | ⬜ | |

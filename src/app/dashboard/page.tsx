@@ -14,7 +14,8 @@ import {
   Banknote,
   PiggyBankIcon,
   Building2,
-  CircleDollarSign
+  CircleDollarSign,
+  Tag
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -95,6 +96,14 @@ export default function DashboardPage() {
       href: "/dashboard/transactions",
       color: "text-green-500",
       disabled: true,
+    },
+    {
+      title: "Categories",
+      description: "Organize your transactions",
+      icon: Tag,
+      href: "/dashboard/categories",
+      color: "text-blue-500",
+      disabled: false,
     },
     {
       title: "Budgets",

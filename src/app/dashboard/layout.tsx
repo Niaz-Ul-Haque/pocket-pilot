@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { auth } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -33,9 +34,9 @@ export default async function DashboardLayout({
       {/* Header */}
       <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <Link href="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <h1 className="text-xl font-bold">Simple Tracker</h1>
-          </div>
+          </Link>
 
           {/* User Menu */}
           <div className="flex items-center gap-3">

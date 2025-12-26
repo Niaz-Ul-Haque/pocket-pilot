@@ -1,18 +1,21 @@
 "use client"
 
-import { toast } from "sonner"
-import { useState } from "react"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+import { useEffect, useState } from "react"
+import Link from "next/link"
+import { useSession } from "next-auth/react"
+import { 
+  ArrowRight, 
+  Wallet, 
+  PiggyBank, 
+  Receipt, 
+  TrendingUp, 
+  Plus,
+  CreditCard,
+  Banknote,
+  PiggyBankIcon,
+  Building2,
+  CircleDollarSign
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -21,638 +24,259 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
-import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command"
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu"
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
-import { Slider } from "@/components/ui/slider"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { Toggle } from "@/components/ui/toggle"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer, LineChart, Line, Legend } from "@/components/ui/chart"
-import { Bell, ChevronDown, Info, Menu, Settings, Trash2, Bold, Italic, Underline, Calendar, Home, DollarSign } from "lucide-react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
+import type { Account } from "@/lib/validators/account"
+
+// Get icon based on account type
+function getAccountIcon(type: string) {
+  switch (type) {
+    case "Checking":
+      return <Building2 className="h-5 w-5" />
+    case "Savings":
+      return <PiggyBankIcon className="h-5 w-5" />
+    case "Credit":
+      return <CreditCard className="h-5 w-5" />
+    case "Cash":
+      return <Banknote className="h-5 w-5" />
+    case "Investment":
+      return <TrendingUp className="h-5 w-5" />
+    default:
+      return <CircleDollarSign className="h-5 w-5" />
+  }
+}
+
+// Get color based on account type
+function getAccountColor(type: string) {
+  switch (type) {
+    case "Checking":
+      return "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+    case "Savings":
+      return "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
+    case "Credit":
+      return "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
+    case "Cash":
+      return "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400"
+    case "Investment":
+      return "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400"
+    default:
+      return "bg-gray-100 text-gray-600 dark:bg-gray-900/30 dark:text-gray-400"
+  }
+}
 
 export default function DashboardPage() {
-  const [progress, setProgress] = useState(65)
-  const [sliderValue, setSliderValue] = useState([50])
-  const [loading, setLoading] = useState(false)
+  const { data: session } = useSession()
+  const firstName = session?.user?.name?.split(" ")[0] || "there"
+  
+  const [accounts, setAccounts] = useState<Account[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  const chartData = [
-    { month: "Jan", income: 2400, expenses: 1398 },
-    { month: "Feb", income: 1398, expenses: 2210 },
-    { month: "Mar", income: 9800, expenses: 2290 },
-    { month: "Apr", income: 3908, expenses: 2000 },
-    { month: "May", income: 4800, expenses: 2181 },
-    { month: "Jun", income: 3800, expenses: 2500 },
+  useEffect(() => {
+    async function fetchAccounts() {
+      try {
+        const response = await fetch("/api/accounts")
+        if (response.ok) {
+          const data = await response.json()
+          setAccounts(data)
+        }
+      } catch (error) {
+        console.error("Error fetching accounts:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchAccounts()
+  }, [])
+
+  const quickActions = [
+    {
+      title: "Transactions",
+      description: "Log your income and expenses",
+      icon: Receipt,
+      href: "/dashboard/transactions",
+      color: "text-green-500",
+      disabled: true,
+    },
+    {
+      title: "Budgets",
+      description: "Create monthly spending limits",
+      icon: TrendingUp,
+      href: "/dashboard/budgets",
+      color: "text-orange-500",
+      disabled: true,
+    },
+    {
+      title: "Goals",
+      description: "Save for what matters to you",
+      icon: PiggyBank,
+      href: "/dashboard/goals",
+      color: "text-purple-500",
+      disabled: true,
+    },
   ]
 
-  return (
-    <div className="container mx-auto p-6 space-y-8">
-      {/* Breadcrumb Navigation */}
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink href="/dashboard">
-              <Home className="h-4 w-4" />
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>Component Showcase</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
+  const hasAccounts = accounts.length > 0
 
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">UI Components Showcase</h1>
-          <p className="text-muted-foreground">
-            Explore all available UI components for the tracker
+  return (
+    <div className="flex flex-1 flex-col">
+      <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        {/* Welcome Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">
+            Welcome back, {firstName}! 👋
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            {hasAccounts 
+              ? "Here's an overview of your finances."
+              : "Get started by setting up your accounts and tracking your finances."
+            }
           </p>
         </div>
-        
-        {/* Sheet Example */}
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="outline">
-              <Menu className="h-4 w-4 mr-2" />
-              Open Menu
-            </Button>
-          </SheetTrigger>
-          <SheetContent>
-            <SheetHeader>
-              <SheetTitle>Settings Panel</SheetTitle>
-              <SheetDescription>
-                Configure your preferences here
-              </SheetDescription>
-            </SheetHeader>
-            <div className="space-y-4 py-4">
-              <div className="flex items-center justify-between">
-                <Label>Notifications</Label>
-                <Switch />
-              </div>
-              <div className="flex items-center justify-between">
-                <Label>Dark Mode</Label>
-                <Switch />
-              </div>
-              <div className="space-y-2">
-                <Label>Volume</Label>
-                <Slider value={sliderValue} onValueChange={setSliderValue} max={100} step={1} />
-                <p className="text-sm text-muted-foreground">{sliderValue}%</p>
-              </div>
+
+        {/* Accounts Section */}
+        {isLoading ? (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-9 w-28" />
             </div>
-          </SheetContent>
-        </Sheet>
-      </div>
-
-      {/* Tabs with different component sections */}
-      <Tabs defaultValue="interactive" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="interactive">Interactive</TabsTrigger>
-          <TabsTrigger value="feedback">Feedback</TabsTrigger>
-          <TabsTrigger value="data">Data & Charts</TabsTrigger>
-          <TabsTrigger value="navigation">Navigation</TabsTrigger>
-        </TabsList>
-
-        {/* Interactive Components Tab */}
-        <TabsContent value="interactive" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {/* Toast & Alert Dialog Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Notifications & Alerts</CardTitle>
-                <CardDescription>Toast and alert dialog examples</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button
-                  onClick={() => toast.success("Transaction added successfully!")}
-                  className="w-full"
-                  variant="outline"
-                >
-                  Show Success Toast
-                </Button>
-                <Button
-                  onClick={() => toast.error("Failed to save transaction")}
-                  className="w-full"
-                  variant="outline"
-                >
-                  Show Error Toast
-                </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" className="w-full">
-                      Delete Transaction
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the transaction.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => toast.success("Transaction deleted")}>
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </CardContent>
-            </Card>
-
-            {/* Form Controls Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Form Controls</CardTitle>
-                <CardDescription>Checkboxes, switches, and radios</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="terms" />
-                  <Label htmlFor="terms">Accept terms and conditions</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="marketing" defaultChecked />
-                  <Label htmlFor="marketing">Send marketing emails</Label>
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label>Enable notifications</Label>
-                  <Switch />
-                </div>
-                <div className="space-y-2">
-                  <Label>Transaction Type</Label>
-                  <RadioGroup defaultValue="expense">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="income" id="income" />
-                      <Label htmlFor="income">Income</Label>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-28" />
+              ))}
+            </div>
+          </div>
+        ) : hasAccounts ? (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Your Accounts</h2>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/dashboard/accounts">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Account
+                </Link>
+              </Button>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {accounts.map((account) => (
+                <Card key={account.id} className="h-full">
+                  <CardContent className="pt-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`rounded-lg p-2.5 ${getAccountColor(account.type)}`}>
+                          {getAccountIcon(account.type)}
+                        </div>
+                        <div>
+                          <p className="font-medium">{account.name}</p>
+                          <p className="text-sm text-muted-foreground">{account.type}</p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="expense" id="expense" />
-                      <Label htmlFor="expense">Expense</Label>
+                    <div className="mt-4">
+                      <p className="text-2xl font-bold">$0.00</p>
+                      <p className="text-xs text-muted-foreground">Current balance</p>
                     </div>
-                  </RadioGroup>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Slider & Progress Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Progress & Sliders</CardTitle>
-                <CardDescription>Visual progress indicators</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <Label>Monthly Budget</Label>
-                    <span className="text-muted-foreground">{progress}%</span>
+                  </CardContent>
+                </Card>
+              ))}
+              
+              {/* Add Account Card */}
+              <Link href="/dashboard/accounts">
+                <Card className="border-dashed hover:border-primary/50 transition-colors cursor-pointer h-full">
+                  <CardContent className="flex flex-col items-center justify-center h-full min-h-[140px] text-muted-foreground">
+                    <Plus className="h-8 w-8 mb-2" />
+                    <p className="font-medium">Add Account</p>
+                  </CardContent>
+                </Card>
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <Card className="mb-8 border-primary/20 bg-primary/5">
+            <CardHeader>
+              <CardTitle className="text-lg">Get Started</CardTitle>
+              <CardDescription>
+                Complete these steps to start tracking your finances
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shrink-0">
+                    1
                   </div>
-                  <Progress value={progress} />
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => setProgress(Math.min(100, progress + 10))}
-                  >
-                    Add 10%
+                  <div>
+                    <p className="font-medium">Create your first account</p>
+                    <p className="text-sm text-muted-foreground">
+                      Add a checking, savings, or credit card account
+                    </p>
+                  </div>
+                </div>
+                <Button asChild className="shrink-0">
+                  <Link href="/dashboard/accounts">
+                    Create Account
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Quick Actions Grid */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {/* Accounts action - only show if no accounts yet */}
+            {!hasAccounts && (
+              <Card className="hover:border-primary/50 transition-colors">
+                <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
+                  <div className="rounded-lg bg-blue-100 dark:bg-blue-900/30 p-2 text-blue-600 dark:text-blue-400">
+                    <Wallet className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1">
+                    <CardTitle className="text-base">Accounts</CardTitle>
+                    <CardDescription className="text-sm">
+                      Set up your financial accounts
+                    </CardDescription>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Button variant="outline" asChild className="w-full">
+                    <Link href="/dashboard/accounts">
+                      Get Started
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
                   </Button>
-                </div>
-                <div className="space-y-2">
-                  <Label>Set Budget Limit</Label>
-                  <Slider
-                    value={[progress]}
-                    onValueChange={(value) => setProgress(value[0])}
-                    max={100}
-                    step={1}
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Current: ${(progress * 50).toFixed(0)}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Popover & Tooltip Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Popovers & Tooltips</CardTitle>
-                <CardDescription>Contextual information displays</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="outline" className="w-full">
-                        <Info className="h-4 w-4 mr-2" />
-                        Hover for tooltip
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>This is a helpful tooltip!</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full">
-                      <Settings className="h-4 w-4 mr-2" />
-                      Open Popover
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent>
-                    <div className="space-y-2">
-                      <h4 className="font-semibold">Quick Settings</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Configure your transaction preferences
-                      </p>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="auto-save" />
-                        <Label htmlFor="auto-save">Auto-save</Label>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-
-                <HoverCard>
-                  <HoverCardTrigger asChild>
-                    <Button variant="link" className="w-full">
-                      Hover Card Example
-                    </Button>
-                  </HoverCardTrigger>
-                  <HoverCardContent className="w-80">
-                    <div className="space-y-1">
-                      <h4 className="text-sm font-semibold">Transaction Details</h4>
-                      <p className="text-sm text-muted-foreground">
-                        View detailed information about your transactions when hovering over items
-                      </p>
-                      <div className="flex items-center pt-2">
-                        <Badge>Premium Feature</Badge>
-                      </div>
-                    </div>
-                  </HoverCardContent>
-                </HoverCard>
-              </CardContent>
-            </Card>
-
-            {/* Toggle & Toggle Group Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Toggles</CardTitle>
-                <CardDescription>Toggle buttons and groups</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Text Formatting</Label>
-                  <ToggleGroup type="multiple">
-                    <ToggleGroupItem value="bold" aria-label="Toggle bold">
-                      <Bold className="h-4 w-4" />
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="italic" aria-label="Toggle italic">
-                      <Italic className="h-4 w-4" />
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="underline" aria-label="Toggle underline">
-                      <Underline className="h-4 w-4" />
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                </div>
-                <div className="space-y-2">
-                  <Label>View Mode</Label>
-                  <ToggleGroup type="single" defaultValue="list">
-                    <ToggleGroupItem value="list">List</ToggleGroupItem>
-                    <ToggleGroupItem value="grid">Grid</ToggleGroupItem>
-                    <ToggleGroupItem value="calendar">Calendar</ToggleGroupItem>
-                  </ToggleGroup>
-                </div>
-                <Toggle aria-label="Toggle notifications">
-                  <Bell className="h-4 w-4 mr-2" />
-                  Notifications
-                </Toggle>
-              </CardContent>
-            </Card>
-
-            {/* Command Palette Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Command Palette</CardTitle>
-                <CardDescription>Quick search and actions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Command className="rounded-lg border">
-                  <CommandInput placeholder="Search transactions..." />
-                  <CommandList>
-                    <CommandEmpty>No results found.</CommandEmpty>
-                    <CommandGroup heading="Suggestions">
-                      <CommandItem>
-                        <Calendar className="mr-2 h-4 w-4" />
-                        <span>View Calendar</span>
-                      </CommandItem>
-                      <CommandItem>
-                        <DollarSign className="mr-2 h-4 w-4" />
-                        <span>Add Transaction</span>
-                      </CommandItem>
-                      <CommandItem>
-                        <Settings className="mr-2 h-4 w-4" />
-                        <span>Settings</span>
-                      </CommandItem>
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Feedback Components Tab */}
-        <TabsContent value="feedback" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            {/* Skeleton Loading Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Skeleton Loaders</CardTitle>
-                <CardDescription>Loading state placeholders</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center space-x-4">
-                  <Skeleton className="h-12 w-12 rounded-full" />
-                  <div className="space-y-2 flex-1">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
+                </CardContent>
+              </Card>
+            )}
+            
+            {quickActions.map((action) => (
+              <Card
+                key={action.title}
+                className="opacity-50"
+              >
+                <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
+                  <div className={`rounded-lg bg-muted p-2 ${action.color}`}>
+                    <action.icon className="h-5 w-5" />
                   </div>
-                </div>
-                <Skeleton className="h-20 w-full" />
-                <div className="flex gap-2">
-                  <Skeleton className="h-10 w-20" />
-                  <Skeleton className="h-10 w-20" />
-                </div>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    setLoading(true)
-                    setTimeout(() => setLoading(false), 2000)
-                  }}
-                >
-                  {loading ? "Loading..." : "Trigger Loading"}
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Accordion Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Accordion</CardTitle>
-                <CardDescription>Collapsible content sections</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Accordion type="single" collapsible className="w-full">
-                  <AccordionItem value="item-1">
-                    <AccordionTrigger>How do I add a transaction?</AccordionTrigger>
-                    <AccordionContent>
-                      Click the &quot;Add Transaction&quot; button and fill in the amount, category, and description.
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="item-2">
-                    <AccordionTrigger>Can I export my data?</AccordionTrigger>
-                    <AccordionContent>
-                      Yes, you can export your data in CSV or JSON format from the settings page.
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="item-3">
-                    <AccordionTrigger>Is my data secure?</AccordionTrigger>
-                    <AccordionContent>
-                      All data is encrypted and stored securely in Supabase with row-level security.
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              </CardContent>
-            </Card>
-
-            {/* Collapsible Card */}
-            <Card className="col-span-full">
-              <CardHeader>
-                <CardTitle>Collapsible</CardTitle>
-                <CardDescription>Expandable content sections</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Collapsible>
-                  <CollapsibleTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between">
-                      View transaction details
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="mt-4 space-y-2">
-                    <div className="rounded-md border p-4">
-                      <div className="flex justify-between mb-2">
-                        <span className="text-sm font-medium">Transaction ID:</span>
-                        <span className="text-sm text-muted-foreground">#TXN-001</span>
-                      </div>
-                      <div className="flex justify-between mb-2">
-                        <span className="text-sm font-medium">Date:</span>
-                        <span className="text-sm text-muted-foreground">Dec 26, 2025</span>
-                      </div>
-                      <div className="flex justify-between mb-2">
-                        <span className="text-sm font-medium">Category:</span>
-                        <Badge>Food & Dining</Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm font-medium">Amount:</span>
-                        <span className="text-sm font-semibold text-red-600">-$45.50</span>
-                      </div>
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Data & Charts Tab */}
-        <TabsContent value="data" className="space-y-4">
-          {/* Charts Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Financial Charts</CardTitle>
-              <CardDescription>Income vs Expenses over time</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <ChartTooltip />
-                  <Legend />
-                  <Bar dataKey="income" fill="#22c55e" />
-                  <Bar dataKey="expenses" fill="#ef4444" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Trend Analysis</CardTitle>
-              <CardDescription>Line chart showing trends</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <ChartTooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="income" stroke="#22c55e" strokeWidth={2} />
-                  <Line type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Scroll Area Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Transaction List (Scrollable)</CardTitle>
-              <CardDescription>Scroll area for long content</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[300px] w-full rounded-md border p-4">
-                {Array.from({ length: 20 }).map((_, i) => (
-                  <div key={i} className="mb-4 flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Transaction #{i + 1}</p>
-                      <p className="text-sm text-muted-foreground">Dec {26 - i}, 2025</p>
-                    </div>
-                    <span className={`font-semibold ${i % 2 === 0 ? "text-green-600" : "text-red-600"}`}>
-                      {i % 2 === 0 ? "+" : "-"}${(Math.random() * 200).toFixed(2)}
-                    </span>
+                  <div className="flex-1">
+                    <CardTitle className="text-base">{action.title}</CardTitle>
+                    <CardDescription className="text-sm">
+                      {action.description}
+                    </CardDescription>
                   </div>
-                ))}
-              </ScrollArea>
-            </CardContent>
-          </Card>
-
-          {/* Context Menu Example */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Context Menu</CardTitle>
-              <CardDescription>Right-click the box below</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ContextMenu>
-                <ContextMenuTrigger className="flex h-[200px] w-full items-center justify-center rounded-md border border-dashed">
-                  <p className="text-sm text-muted-foreground">Right-click here</p>
-                </ContextMenuTrigger>
-                <ContextMenuContent className="w-64">
-                  <ContextMenuItem>View Details</ContextMenuItem>
-                  <ContextMenuItem>Edit Transaction</ContextMenuItem>
-                  <ContextMenuItem>Duplicate</ContextMenuItem>
-                  <ContextMenuItem className="text-red-600">
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </ContextMenuItem>
-                </ContextMenuContent>
-              </ContextMenu>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Navigation Tab */}
-        <TabsContent value="navigation" className="space-y-4">
-          {/* Pagination Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Pagination</CardTitle>
-              <CardDescription>Navigate through pages</CardDescription>
-            </CardHeader>
-            <CardContent className="flex justify-center">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious href="#" />
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationLink href="#" isActive>1</PaginationLink>
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationLink href="#">2</PaginationLink>
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationLink href="#">3</PaginationLink>
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationEllipsis />
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationNext href="#" />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                </CardHeader>
+                <CardContent>
+                  <Button variant="outline" disabled className="w-full">
+                    Coming Soon
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

@@ -29,10 +29,10 @@ Track story completion status. Update this file as features are implemented.
 |-------|--------|-------|
 | Story 2: Create Accounts | ✅ | API routes, Zod validators, form, page complete |
 | Story 3: Default Categories | ✅ | Seed API, CRUD routes, form, page complete |
-| Story 4: Manual Transaction Entry | ⬜ | |
-| Story 6: Transaction History | ⬜ | |
+| Story 4: Manual Transaction Entry | ✅ | CRUD API, form, table view, search/filter complete |
+| Story 6: Transaction History | ✅ | Included in Story 4 implementation |
 
-**Milestone Status**: 🟡 In progress
+**Milestone Status**: ✅ Complete
 
 ---
 
@@ -40,10 +40,10 @@ Track story completion status. Update this file as features are implemented.
 
 | Story | Status | Notes |
 |-------|--------|-------|
-| Story 7: Monthly Budgets | ⬜ | |
+| Story 7: Monthly Budgets | ✅ | API routes with spent calculation, form, page with progress bars |
 | Story 8: Budget Alerts | ⬜ | |
 
-**Milestone Status**: ⬜ Not started
+**Milestone Status**: 🟡 In progress
 
 ---
 
@@ -106,8 +106,8 @@ Track story completion status. Update this file as features are implemented.
 | next_auth.sessions | ✅ | N/A | Managed by NextAuth |
 | public.accounts | ✅ | ✅ | Migration: supabase/migrations/001_accounts.sql |
 | public.categories | ✅ | ✅ | Migration: supabase/migrations/002_categories.sql |
-| public.transactions | ⬜ | ⬜ | |
-| public.budgets | ⬜ | ⬜ | |
+| public.transactions | ✅ | ✅ | Migration: supabase/migrations/003_transactions.sql |
+| public.budgets | ✅ | ✅ | Migration: supabase/migrations/004_budgets.sql |
 | public.goals | ⬜ | ⬜ | |
 | public.goal_contributions | ⬜ | ⬜ | |
 | public.bills | ⬜ | ⬜ | |

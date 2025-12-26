@@ -95,7 +95,7 @@ export default function DashboardPage() {
       icon: Receipt,
       href: "/dashboard/transactions",
       color: "text-green-500",
-      disabled: true,
+      disabled: false,
     },
     {
       title: "Categories",
@@ -111,7 +111,7 @@ export default function DashboardPage() {
       icon: TrendingUp,
       href: "/dashboard/budgets",
       color: "text-orange-500",
-      disabled: true,
+      disabled: false,
     },
     {
       title: "Goals",

@@ -51,10 +51,10 @@ Track story completion status. Update this file as features are implemented.
 
 | Story | Status | Notes |
 |-------|--------|-------|
-| Story 9: Savings Goals | ⬜ | |
-| Story 10: Goal Contributions | ⬜ | |
+| Story 9: Savings Goals | ✅ | Goals CRUD, progress bars, target dates, monthly required calculation |
+| Story 10: Goal Contributions | ✅ | Contribution API, form, auto-update goal amount, completion detection |
 
-**Milestone Status**: ⬜ Not started
+**Milestone Status**: ✅ Complete
 
 ---
 
@@ -108,8 +108,8 @@ Track story completion status. Update this file as features are implemented.
 | public.categories | ✅ | ✅ | Migration: supabase/migrations/002_categories.sql |
 | public.transactions | ✅ | ✅ | Migration: supabase/migrations/003_transactions.sql |
 | public.budgets | ✅ | ✅ | Migration: supabase/migrations/004_budgets.sql |
-| public.goals | ⬜ | ⬜ | |
-| public.goal_contributions | ⬜ | ⬜ | |
+| public.goals | ✅ | ✅ | Migration: supabase/migrations/005_goals.sql |
+| public.goal_contributions | ✅ | ✅ | Migration: supabase/migrations/005_goals.sql |
 | public.bills | ⬜ | ⬜ | |
 | public.chat_messages | ⬜ | ⬜ | |
 

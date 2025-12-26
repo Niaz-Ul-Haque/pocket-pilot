@@ -135,7 +135,7 @@ export default function DashboardPage() {
       icon: PiggyBank,
       href: "/dashboard/goals",
       color: "text-purple-500",
-      disabled: true,
+      disabled: false,
     },
   ]
 

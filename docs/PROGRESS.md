@@ -41,9 +41,9 @@ Track story completion status. Update this file as features are implemented.
 | Story | Status | Notes |
 |-------|--------|-------|
 | Story 7: Monthly Budgets | ✅ | API routes with spent calculation, form, page with progress bars |
-| Story 8: Budget Alerts | ⬜ | |
+| Story 8: Budget Alerts | ✅ | Dashboard banner for over/warning budgets, dismissible alerts |
 
-**Milestone Status**: 🟡 In progress
+**Milestone Status**: ✅ Complete
 
 ---
 

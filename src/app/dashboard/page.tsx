@@ -15,7 +15,9 @@ import {
   PiggyBankIcon,
   Building2,
   CircleDollarSign,
-  Tag
+  Tag,
+  AlertTriangle,
+  X
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -26,7 +28,10 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import type { Account } from "@/lib/validators/account"
+import type { BudgetWithDetails } from "@/lib/validators/budget"
+import { cn } from "@/lib/utils"
 
 // Get icon based on account type
 function getAccountIcon(type: string) {
@@ -69,23 +74,34 @@ export default function DashboardPage() {
   const firstName = session?.user?.name?.split(" ")[0] || "there"
   
   const [accounts, setAccounts] = useState<Account[]>([])
+  const [budgets, setBudgets] = useState<BudgetWithDetails[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [alertDismissed, setAlertDismissed] = useState(false)
 
   useEffect(() => {
-    async function fetchAccounts() {
+    async function fetchData() {
       try {
-        const response = await fetch("/api/accounts")
-        if (response.ok) {
-          const data = await response.json()
-          setAccounts(data)
+        const [accountsRes, budgetsRes] = await Promise.all([
+          fetch("/api/accounts"),
+          fetch("/api/budgets"),
+        ])
+        
+        if (accountsRes.ok) {
+          const accountsData = await accountsRes.json()
+          setAccounts(accountsData)
+        }
+        
+        if (budgetsRes.ok) {
+          const budgetsData = await budgetsRes.json()
+          setBudgets(budgetsData)
         }
       } catch (error) {
-        console.error("Error fetching accounts:", error)
+        console.error("Error fetching data:", error)
       } finally {
         setIsLoading(false)
       }
     }
-    fetchAccounts()
+    fetchData()
   }, [])
 
   const quickActions = [
@@ -124,10 +140,76 @@ export default function DashboardPage() {
   ]
 
   const hasAccounts = accounts.length > 0
+  
+  // Calculate budget alerts
+  const overBudgetCategories = budgets.filter((b) => b.spent > b.amount)
+  const warningBudgetCategories = budgets.filter((b) => {
+    const percentage = (b.spent / b.amount) * 100
+    return percentage >= 90 && percentage < 100
+  })
+  const hasAlerts = overBudgetCategories.length > 0 || warningBudgetCategories.length > 0
 
   return (
     <div className="flex flex-1 flex-col">
       <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        {/* Budget Alerts Banner */}
+        {hasAlerts && !alertDismissed && (
+          <Alert 
+            variant={overBudgetCategories.length > 0 ? "destructive" : "default"}
+            className={cn(
+              "mb-6",
+              overBudgetCategories.length === 0 && "border-yellow-500 bg-yellow-50 text-yellow-900 dark:bg-yellow-950/30 dark:text-yellow-100 [&>svg]:text-yellow-600"
+            )}
+          >
+            <AlertTriangle className="h-4 w-4" />
+            <div className="flex-1">
+              <AlertTitle className="flex items-center justify-between">
+                <span>
+                  {overBudgetCategories.length > 0 
+                    ? "Budget Alert" 
+                    : "Budget Warning"}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 -mr-2"
+                  onClick={() => setAlertDismissed(true)}
+                >
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Dismiss</span>
+                </Button>
+              </AlertTitle>
+              <AlertDescription>
+                {overBudgetCategories.length > 0 && (
+                  <span>
+                    You&apos;ve exceeded your budget in{" "}
+                    <strong>
+                      {overBudgetCategories.map((b) => b.category_name).join(", ")}
+                    </strong>
+                    .{" "}
+                  </span>
+                )}
+                {warningBudgetCategories.length > 0 && (
+                  <span>
+                    {overBudgetCategories.length > 0 ? "Also nearing " : "Nearing "}
+                    limit in{" "}
+                    <strong>
+                      {warningBudgetCategories.map((b) => b.category_name).join(", ")}
+                    </strong>
+                    .{" "}
+                  </span>
+                )}
+                <Link 
+                  href="/dashboard/budgets" 
+                  className="underline font-medium hover:no-underline"
+                >
+                  View budgets →
+                </Link>
+              </AlertDescription>
+            </div>
+          </Alert>
+        )}
+
         {/* Welcome Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight">
@@ -263,7 +345,10 @@ export default function DashboardPage() {
             {quickActions.map((action) => (
               <Card
                 key={action.title}
-                className="opacity-50"
+                className={cn(
+                  "transition-colors",
+                  action.disabled ? "opacity-50" : "hover:border-primary/50"
+                )}
               >
                 <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
                   <div className={`rounded-lg bg-muted p-2 ${action.color}`}>
@@ -277,9 +362,18 @@ export default function DashboardPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Button variant="outline" disabled className="w-full">
-                    Coming Soon
-                  </Button>
+                  {action.disabled ? (
+                    <Button variant="outline" disabled className="w-full">
+                      Coming Soon
+                    </Button>
+                  ) : (
+                    <Button variant="outline" asChild className="w-full">
+                      <Link href={action.href}>
+                        Open
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             ))}

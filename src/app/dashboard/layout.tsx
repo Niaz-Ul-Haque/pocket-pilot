@@ -49,7 +49,7 @@ export default async function DashboardLayout({
       <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <h1 className="text-xl font-bold">Simple Tracker</h1>
+            <h1 className="text-xl font-bold">Pocket Pilot</h1>
           </Link>
 
           {/* User Menu */}

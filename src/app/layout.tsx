@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toast";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Simple Tracker",
+  title: "Pocket Pilot",
   description: "A simple tracking application built with Next.js",
 };
 

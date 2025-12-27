@@ -7,7 +7,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md mx-4">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">
-            Welcome to Simple Tracker
+            Welcome to Pocket Pilot
           </CardTitle>
           <CardDescription className="text-center">
             Sign in with your Google account to continue

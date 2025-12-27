@@ -22,7 +22,8 @@
       "Bash(if exist .next rmdir /s /q .next)",
       "Bash(Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue)",
       "Bash(npx tsc:*)",
-      "WebFetch(domain:ai-sdk.dev)"
+      "WebFetch(domain:ai-sdk.dev)",
+      "Bash(cd:*)"
     ]
   }
 }

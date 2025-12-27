@@ -19,10 +19,10 @@ export default async function Home() {
       <div className="container mx-auto px-4 py-16">
         <div className="text-center space-y-6 max-w-3xl mx-auto">
           <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            Simple Tracker
+            Pocket Pilot
           </h1>
           <p className="text-xl md:text-2xl text-muted-foreground">
-            Track your finances effortlessly with our simple and intuitive platform
+            Navigate your finances with confidence using AI-powered insights
           </p>
           <div className="pt-4">
             <Link href="/login">

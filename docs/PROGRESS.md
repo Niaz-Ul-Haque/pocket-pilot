@@ -62,11 +62,11 @@ Track story completion status. Update this file as features are implemented.
 
 | Story | Status | Notes |
 |-------|--------|-------|
-| Story 11: Recurring Bills | ⬜ | |
-| Story 12: Bill Due Alerts | ⬜ | |
-| Story 13: Mark Bill Paid | ⬜ | |
+| Story 11: Recurring Bills | ✅ | Bills CRUD API, form, list page with status badges, frequency options (weekly/biweekly/monthly/yearly) |
+| Story 12: Bill Due Alerts | ✅ | Dashboard bill alerts banner, status calculation (overdue/due-today/due-soon/upcoming) |
+| Story 13: Mark Bill Paid | ✅ | Mark paid form, optional transaction creation, auto-advance next_due_date |
 
-**Milestone Status**: ⬜ Not started
+**Milestone Status**: ✅ Complete
 
 ---
 

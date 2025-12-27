@@ -17,7 +17,9 @@ import {
   CircleDollarSign,
   Tag,
   AlertTriangle,
-  X
+  X,
+  Clock,
+  CalendarClock,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -31,6 +33,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import type { Account } from "@/lib/validators/account"
 import type { BudgetWithDetails } from "@/lib/validators/budget"
+import type { BillWithStatus } from "@/lib/validators/bill"
 import { cn } from "@/lib/utils"
 
 // Get icon based on account type
@@ -75,15 +78,18 @@ export default function DashboardPage() {
   
   const [accounts, setAccounts] = useState<Account[]>([])
   const [budgets, setBudgets] = useState<BudgetWithDetails[]>([])
+  const [urgentBills, setUrgentBills] = useState<BillWithStatus[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [alertDismissed, setAlertDismissed] = useState(false)
+  const [budgetAlertDismissed, setBudgetAlertDismissed] = useState(false)
+  const [billAlertDismissed, setBillAlertDismissed] = useState(false)
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [accountsRes, budgetsRes] = await Promise.all([
+        const [accountsRes, budgetsRes, billsRes] = await Promise.all([
           fetch("/api/accounts"),
           fetch("/api/budgets"),
+          fetch("/api/bills?upcoming=true&days=3"),
         ])
         
         if (accountsRes.ok) {
@@ -94,6 +100,16 @@ export default function DashboardPage() {
         if (budgetsRes.ok) {
           const budgetsData = await budgetsRes.json()
           setBudgets(budgetsData)
+        }
+
+        if (billsRes.ok) {
+          const billsData = await billsRes.json()
+          // Filter to only overdue or due-today bills
+          setUrgentBills(
+            billsData.filter(
+              (b: BillWithStatus) => b.status === "overdue" || b.status === "due-today" || b.status === "due-soon"
+            )
+          )
         }
       } catch (error) {
         console.error("Error fetching data:", error)
@@ -137,6 +153,14 @@ export default function DashboardPage() {
       color: "text-purple-500",
       disabled: false,
     },
+    {
+      title: "Bills",
+      description: "Track recurring payments",
+      icon: CalendarClock,
+      href: "/dashboard/bills",
+      color: "text-red-500",
+      disabled: false,
+    },
   ]
 
   const hasAccounts = accounts.length > 0
@@ -147,13 +171,78 @@ export default function DashboardPage() {
     const percentage = (b.spent / b.amount) * 100
     return percentage >= 90 && percentage < 100
   })
-  const hasAlerts = overBudgetCategories.length > 0 || warningBudgetCategories.length > 0
+  const hasBudgetAlerts = overBudgetCategories.length > 0 || warningBudgetCategories.length > 0
+
+  // Calculate bill alerts
+  const overdueBills = urgentBills.filter((b) => b.status === "overdue")
+  const dueTodayBills = urgentBills.filter((b) => b.status === "due-today")
+  const dueSoonBills = urgentBills.filter((b) => b.status === "due-soon")
+  const hasBillAlerts = overdueBills.length > 0 || dueTodayBills.length > 0 || dueSoonBills.length > 0
 
   return (
     <div className="flex flex-1 flex-col">
       <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        {/* Bill Alerts Banner */}
+        {hasBillAlerts && !billAlertDismissed && (
+          <Alert 
+            variant={overdueBills.length > 0 ? "destructive" : "default"}
+            className={cn(
+              "mb-4",
+              overdueBills.length === 0 && "border-yellow-500 bg-yellow-50 text-yellow-900 dark:bg-yellow-950/30 dark:text-yellow-100 [&>svg]:text-yellow-600"
+            )}
+          >
+            <Clock className="h-4 w-4" />
+            <div className="flex-1">
+              <AlertTitle className="flex items-center justify-between">
+                <span>
+                  {overdueBills.length > 0 
+                    ? "Bills Overdue" 
+                    : dueTodayBills.length > 0 
+                    ? "Bills Due Today"
+                    : "Bills Due Soon"}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 -mr-2"
+                  onClick={() => setBillAlertDismissed(true)}
+                >
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Dismiss</span>
+                </Button>
+              </AlertTitle>
+              <AlertDescription>
+                {overdueBills.length > 0 && (
+                  <span>
+                    <strong>{overdueBills.map((b) => b.name).join(", ")}</strong>
+                    {overdueBills.length === 1 ? " is" : " are"} overdue.{" "}
+                  </span>
+                )}
+                {dueTodayBills.length > 0 && (
+                  <span>
+                    <strong>{dueTodayBills.map((b) => b.name).join(", ")}</strong>
+                    {dueTodayBills.length === 1 ? " is" : " are"} due today.{" "}
+                  </span>
+                )}
+                {dueSoonBills.length > 0 && (
+                  <span>
+                    <strong>{dueSoonBills.map((b) => b.name).join(", ")}</strong>
+                    {dueSoonBills.length === 1 ? " is" : " are"} due soon.{" "}
+                  </span>
+                )}
+                <Link 
+                  href="/dashboard/bills" 
+                  className="underline font-medium hover:no-underline"
+                >
+                  View bills →
+                </Link>
+              </AlertDescription>
+            </div>
+          </Alert>
+        )}
+
         {/* Budget Alerts Banner */}
-        {hasAlerts && !alertDismissed && (
+        {hasBudgetAlerts && !budgetAlertDismissed && (
           <Alert 
             variant={overBudgetCategories.length > 0 ? "destructive" : "default"}
             className={cn(
@@ -173,7 +262,7 @@ export default function DashboardPage() {
                   variant="ghost"
                   size="icon"
                   className="h-6 w-6 -mr-2"
-                  onClick={() => setAlertDismissed(true)}
+                  onClick={() => setBudgetAlertDismissed(true)}
                 >
                   <X className="h-4 w-4" />
                   <span className="sr-only">Dismiss</span>

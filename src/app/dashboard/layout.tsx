@@ -1,16 +1,19 @@
 import Link from "next/link"
 import { auth } from "@/lib/auth"
+import { supabaseAdmin } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { LogoutButton } from "@/components/logout-button"
 import { redirect } from "next/navigation"
+import { User } from "lucide-react"
 
 export default async function DashboardLayout({
   children,
@@ -21,6 +24,17 @@ export default async function DashboardLayout({
 
   if (!session?.user) {
     redirect("/login")
+  }
+
+  // Check if user has completed onboarding
+  const { data: profile } = await supabaseAdmin
+    .from("user_profiles")
+    .select("has_completed_onboarding")
+    .eq("user_id", session.user.id)
+    .single()
+
+  if (!profile?.has_completed_onboarding) {
+    redirect("/onboarding")
   }
 
   const userInitials = session.user.name
@@ -68,6 +82,13 @@ export default async function DashboardLayout({
                     {session.user.email}
                   </p>
                 </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/account" className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    Account Settings
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <LogoutButton />
               </DropdownMenuContent>

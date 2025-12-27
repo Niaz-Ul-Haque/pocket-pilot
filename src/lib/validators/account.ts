@@ -28,4 +28,20 @@ export type Account = {
   name: string
   type: AccountType
   created_at: string
+  balance?: number
+}
+
+// Format balance for display
+export function formatBalance(balance: number): string {
+  return new Intl.NumberFormat("en-CA", {
+    style: "currency",
+    currency: "CAD",
+  }).format(balance)
+}
+
+// Get balance color class
+export function getBalanceColorClass(balance: number): string {
+  if (balance < 0) return "text-red-600 dark:text-red-400"
+  if (balance > 0) return "text-green-600 dark:text-green-400"
+  return "text-muted-foreground"
 }

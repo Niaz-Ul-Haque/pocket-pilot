@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { AccountForm } from "@/components/forms/account-form"
-import type { Account } from "@/lib/validators/account"
+import { type Account, formatBalance, getBalanceColorClass } from "@/lib/validators/account"
 
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState<Account[]>([])
@@ -208,8 +208,9 @@ export default function AccountsPage() {
               </CardHeader>
               <CardContent>
                 <CardDescription>{account.type}</CardDescription>
-                {/* Balance will be calculated from transactions in the future */}
-                <p className="text-2xl font-bold mt-2">$0.00</p>
+                <p className={`text-2xl font-bold mt-2 ${getBalanceColorClass(account.balance || 0)}`}>
+                  {formatBalance(account.balance || 0)}
+                </p>
               </CardContent>
             </Card>
           ))}

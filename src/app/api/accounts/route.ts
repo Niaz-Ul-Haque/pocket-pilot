@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth"
 import { supabaseAdmin } from "@/lib/supabase"
 import { accountSchema } from "@/lib/validators/account"
 
-// GET /api/accounts - List all accounts for the current user
+// GET /api/accounts - List all accounts for the current user with balances
 export async function GET() {
   try {
     const session = await auth()
@@ -11,7 +11,8 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { data, error } = await supabaseAdmin
+    // Fetch accounts
+    const { data: accounts, error } = await supabaseAdmin
       .from("accounts")
       .select("*")
       .eq("user_id", session.user.id)
@@ -22,7 +23,21 @@ export async function GET() {
       return NextResponse.json({ error: "Failed to fetch accounts" }, { status: 500 })
     }
 
-    return NextResponse.json(data)
+    // Calculate balance for each account from transactions
+    const accountsWithBalances = await Promise.all(
+      accounts.map(async (account) => {
+        const { data: transactions } = await supabaseAdmin
+          .from("transactions")
+          .select("amount")
+          .eq("account_id", account.id)
+          .eq("user_id", session.user.id)
+
+        const balance = transactions?.reduce((sum, t) => sum + t.amount, 0) || 0
+        return { ...account, balance }
+      })
+    )
+
+    return NextResponse.json(accountsWithBalances)
   } catch (error) {
     console.error("Error in GET /api/accounts:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

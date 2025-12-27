@@ -12,6 +12,7 @@ import {
   ArrowUpCircle,
   ArrowDownCircle,
   ArrowRightLeft,
+  Upload,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -63,6 +64,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { TransactionForm } from "@/components/forms/transaction-form"
+import { CsvImportForm } from "@/components/forms/csv-import-form"
 import {
   type TransactionWithDetails,
   formatAmount,
@@ -84,6 +86,7 @@ export default function TransactionsPage() {
     TransactionWithDetails | undefined
   >()
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
 
   // Filters
   const [searchTerm, setSearchTerm] = useState("")
@@ -239,10 +242,20 @@ export default function TransactionsPage() {
               Track your income and expenses
             </p>
           </div>
-          <Button onClick={handleAddTransaction} disabled={accounts.length === 0}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Transaction
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsImportDialogOpen(true)}
+              disabled={accounts.length === 0}
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              Import CSV
+            </Button>
+            <Button onClick={handleAddTransaction} disabled={accounts.length === 0}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Transaction
+            </Button>
+          </div>
         </div>
 
         {/* Warning if no accounts */}
@@ -482,6 +495,26 @@ export default function TransactionsPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* CSV Import Dialog */}
+        <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Import Transactions from CSV</DialogTitle>
+              <DialogDescription>
+                Upload a CSV file from your bank to import transactions.
+              </DialogDescription>
+            </DialogHeader>
+            <CsvImportForm
+              accounts={accounts}
+              onSuccess={() => {
+                setIsImportDialogOpen(false)
+                fetchData()
+              }}
+              onCancel={() => setIsImportDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )

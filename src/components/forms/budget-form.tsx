@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import { Loader2 } from "lucide-react"
 import {
   budgetSchema,
@@ -59,6 +60,7 @@ export function BudgetForm({
     defaultValues: {
       category_id: budget?.category_id ?? "",
       amount: budget?.amount ?? undefined,
+      rollover: budget?.rollover ?? false,
     },
   })
 
@@ -69,8 +71,8 @@ export function BudgetForm({
       const url = isEditing ? `/api/budgets/${budget.id}` : "/api/budgets"
       const method = isEditing ? "PUT" : "POST"
 
-      // When editing, only send amount
-      const body = isEditing ? { amount: data.amount } : data
+      // When editing, send amount and rollover
+      const body = isEditing ? { amount: data.amount, rollover: data.rollover } : data
 
       const response = await fetch(url, {
         method,
@@ -180,6 +182,28 @@ export function BudgetForm({
                 Set your monthly spending limit for this category
               </FormDescription>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Rollover Toggle */}
+        <FormField
+          control={form.control}
+          name="rollover"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">Rollover unused budget</FormLabel>
+                <FormDescription>
+                  Carry over unspent budget to the next month
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
             </FormItem>
           )}
         />

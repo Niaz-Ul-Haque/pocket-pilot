@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { LogoutButton } from "@/components/logout-button"
+import { NotificationBell } from "@/components/notification-bell"
 import { redirect } from "next/navigation"
 import { User } from "lucide-react"
 
@@ -54,6 +55,9 @@ export default async function DashboardLayout({
 
           {/* User Menu */}
           <div className="flex items-center gap-3">
+            {/* Notification Bell */}
+            <NotificationBell />
+
             <div className="hidden sm:block text-right">
               <p className="text-sm font-medium">{session.user.name}</p>
               <p className="text-xs text-muted-foreground">

@@ -28,7 +28,14 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Plus, Pencil, Trash2, AlertTriangle, CheckCircle } from "lucide-react"
+import { Plus, Pencil, Trash2, AlertTriangle, CheckCircle, RefreshCw } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { BudgetForm } from "@/components/forms/budget-form"
 import {
   type BudgetWithDetails,
@@ -211,24 +218,54 @@ export default function BudgetsPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {budgets.map((budget) => {
+            // Use effective_budget for percentage calculation if rollover is active
+            const effectiveBudget = budget.effective_budget ?? budget.amount
             const percentage = Math.min(
-              (budget.spent / budget.amount) * 100,
+              (budget.spent / effectiveBudget) * 100,
               100
             )
             const status = getBudgetStatus(percentage)
             const statusColors = getBudgetStatusColor(status)
-            const remaining = budget.amount - budget.spent
+            const remaining = effectiveBudget - budget.spent
+            const hasRollover = budget.rollover && budget.rollover_amount && budget.rollover_amount > 0
 
             return (
               <Card key={budget.id}>
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg">
-                        {budget.category_name}
-                      </CardTitle>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <CardTitle className="text-lg">
+                          {budget.category_name}
+                        </CardTitle>
+                        {budget.rollover && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge variant="secondary" className="text-xs gap-1">
+                                  <RefreshCw className="h-3 w-3" />
+                                  Rollover
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Unused budget rolls over to next month</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
                       <CardDescription>
-                        Budget: {formatCurrency(budget.amount)}
+                        {hasRollover ? (
+                          <>
+                            Base: {formatCurrency(budget.amount)}
+                            <span className="mx-1.5 text-green-600">
+                              +{formatCurrency(budget.rollover_amount!)} rollover
+                            </span>
+                            = {formatCurrency(effectiveBudget)}
+                          </>
+                        ) : (
+                          <>Budget: {formatCurrency(budget.amount)}</>
+                        )}
                       </CardDescription>
                     </div>
                     <div className="flex gap-1">

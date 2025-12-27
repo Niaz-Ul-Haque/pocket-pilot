@@ -24,7 +24,10 @@ This is the **central navigation hub** for all project documentation. Use this f
 | [roadmap.md](./roadmap.md) | **Build Plan & Backlog** — MVP milestones, future versions, deferred features | When planning sprints or prioritizing work |
 | [decision-log.md](./decision-log.md) | **Architecture Decision Records** — Key decisions with context and rationale | Before making significant technical changes |
 | [glossary.md](./glossary.md) | **Terminology Definitions** — Finance, tech, and product-specific terms | When encountering unfamiliar terms |
-| [../.github/CLAUDE.md](../.github/CLAUDE.md) | **AI Assistant Instructions** — Rules for Claude/Copilot when implementing | Always consult before code changes |
+| [PROGRESS.md](./PROGRESS.md) | **Implementation Progress** — Story completion status, component audit, feature checklist | When checking what's done or auditing codebase |
+| [next-tasks.md](./next-tasks.md) | **Next Tasks & Roadmap** — Upcoming features, technical debt, known limitations | When planning next work items |
+| [receipt-ocr-spec.md](./receipt-ocr-spec.md) | **Receipt OCR Specification** — v2 feature design document (not implemented) | When planning v2 features |
+| [../.claude/CLAUDE.md](../.claude/CLAUDE.md) | **AI Assistant Instructions** — Rules for Claude/Copilot when implementing | Always consult before code changes |
 
 ---
 
@@ -51,7 +54,9 @@ This is the **central navigation hub** for all project documentation. Use this f
 4. **`data-model.md`** — Understand the data structure (15 min)
 5. **`roadmap.md`** — Understand the build plan (10 min)
 6. **`decision-log.md`** — Understand key decisions (10 min)
-7. **`.github/CLAUDE.md`** — Rules for AI-assisted development (5 min)
+7. **`PROGRESS.md`** — See current implementation status (10 min)
+8. **`next-tasks.md`** — See upcoming work and known limitations (5 min)
+9. **`.claude/CLAUDE.md`** — Rules for AI-assisted development (5 min)
 
 ---
 

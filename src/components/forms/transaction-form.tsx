@@ -21,18 +21,19 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { DatePicker } from "@/components/ui/date-picker"
+import { Label } from "@/components/ui/label"
 import { Loader2 } from "lucide-react"
 import {
   transactionSchema,
   TRANSACTION_TYPES,
   type TransactionFormData,
-  type Transaction,
   type TransactionWithDetails,
   getDefaultTransactionValues,
   dbToFormData,
 } from "@/lib/validators/transaction"
 import type { Account } from "@/lib/validators/account"
 import type { Category } from "@/lib/validators/category"
+import { TagPicker } from "@/components/tag-picker"
 
 interface TransactionFormProps {
   transaction?: TransactionWithDetails
@@ -50,7 +51,22 @@ export function TransactionForm({
   onCancel,
 }: TransactionFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
   const isEditing = !!transaction
+
+  // Fetch existing tags when editing
+  useEffect(() => {
+    if (transaction?.id) {
+      fetch(`/api/transactions/${transaction.id}/tags`)
+        .then((res) => res.json())
+        .then((tags) => {
+          if (Array.isArray(tags)) {
+            setSelectedTagIds(tags.map((t: { id: string }) => t.id))
+          }
+        })
+        .catch(console.error)
+    }
+  }, [transaction?.id])
 
   // Get default values - convert DB format to form format if editing
   const getFormDefaults = (): Partial<TransactionFormData> => {
@@ -104,6 +120,39 @@ export function TransactionForm({
       }
 
       const savedTransaction = await response.json()
+
+      // Save tags for the transaction
+      if (savedTransaction.id) {
+        // Get current tags on the transaction
+        const currentTagsRes = await fetch(`/api/transactions/${savedTransaction.id}/tags`)
+        const currentTags = currentTagsRes.ok ? await currentTagsRes.json() : []
+        const currentTagIds = Array.isArray(currentTags)
+          ? currentTags.map((t: { id: string }) => t.id)
+          : []
+
+        // Add new tags
+        for (const tagId of selectedTagIds) {
+          if (!currentTagIds.includes(tagId)) {
+            await fetch(`/api/transactions/${savedTransaction.id}/tags`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ tag_id: tagId }),
+            })
+          }
+        }
+
+        // Remove deselected tags
+        for (const tagId of currentTagIds) {
+          if (!selectedTagIds.includes(tagId)) {
+            await fetch(`/api/transactions/${savedTransaction.id}/tags`, {
+              method: "DELETE",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ tag_id: tagId }),
+            })
+          }
+        }
+      }
+
       onSuccess(savedTransaction)
     } catch (error) {
       form.setError("root", {
@@ -262,6 +311,15 @@ export function TransactionForm({
             </FormItem>
           )}
         />
+
+        {/* Tags */}
+        <div className="space-y-2">
+          <Label>Tags (Optional)</Label>
+          <TagPicker
+            selectedTagIds={selectedTagIds}
+            onChange={setSelectedTagIds}
+          />
+        </div>
 
         {/* Description */}
         <FormField

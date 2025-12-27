@@ -51,6 +51,7 @@ export type Transaction = {
   amount: number // Stored as signed: negative = expense, positive = income
   description: string | null
   is_transfer: boolean
+  linked_transaction_id: string | null
   created_at: string
 }
 
@@ -59,7 +60,36 @@ export type TransactionWithDetails = Transaction & {
   account_name?: string
   category_name?: string
   category_type?: string
+  linked_account_name?: string // For transfers: the other account
 }
+
+// Schema for creating a transfer between accounts
+export const transferSchema = z.object({
+  from_account_id: z.string().uuid("Please select source account"),
+  to_account_id: z.string().uuid("Please select destination account"),
+  amount: z
+    .number({ message: "Amount is required" })
+    .positive("Amount must be greater than 0")
+    .multipleOf(0.01, "Amount can only have up to 2 decimal places"),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format")
+    .refine(
+      (date) => {
+        const inputDate = new Date(date)
+        const today = new Date()
+        today.setHours(23, 59, 59, 999)
+        return inputDate <= today
+      },
+      { message: "Future dates are not allowed" }
+    ),
+  description: z.string().max(255, "Description is too long").optional().nullable(),
+}).refine((data) => data.from_account_id !== data.to_account_id, {
+  message: "Source and destination accounts must be different",
+  path: ["to_account_id"],
+})
+
+export type TransferFormData = z.infer<typeof transferSchema>
 
 // Helper to convert form data to database format
 // Form uses positive amount + type, DB uses signed amount

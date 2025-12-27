@@ -25,5 +25,6 @@
       "WebFetch(domain:ai-sdk.dev)",
       "Bash(cd:*)"
     ]
-  }
+  },
+  "outputStyle": "default"
 }

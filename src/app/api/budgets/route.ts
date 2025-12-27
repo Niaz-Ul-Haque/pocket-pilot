@@ -22,6 +22,11 @@ export async function GET() {
     .toISOString()
     .split("T")[0]
 
+  // Get previous month boundaries (for rollover calculation)
+  const startOfPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    .toISOString()
+    .split("T")[0]
+
   // Fetch budgets with category info
   const { data: budgets, error: budgetsError } = await supabaseAdmin
     .from("budgets")
@@ -57,7 +62,16 @@ export async function GET() {
     )
   }
 
-  // Calculate spent per category
+  // Fetch previous month spending (for rollover calculation)
+  const { data: prevSpending } = await supabaseAdmin
+    .from("transactions")
+    .select("category_id, amount")
+    .eq("user_id", session.user.id)
+    .lt("amount", 0) // Only expenses
+    .gte("date", startOfPrevMonth)
+    .lt("date", startOfMonth)
+
+  // Calculate spent per category this month
   const spentByCategory: Record<string, number> = {}
   for (const t of spending || []) {
     if (t.category_id) {
@@ -66,9 +80,28 @@ export async function GET() {
     }
   }
 
+  // Calculate spent per category previous month (for rollover)
+  const prevSpentByCategory: Record<string, number> = {}
+  for (const t of prevSpending || []) {
+    if (t.category_id) {
+      prevSpentByCategory[t.category_id] =
+        (prevSpentByCategory[t.category_id] || 0) + Math.abs(t.amount)
+    }
+  }
+
   // Transform budgets with calculated details
   const budgetsWithDetails = budgets.map((b) => {
     const spent = spentByCategory[b.category_id] || 0
+
+    // Calculate rollover amount if enabled
+    // Rollover = previous month budget - previous month spent (only if positive)
+    let rolloverAmount: number | undefined
+    if (b.rollover) {
+      const prevSpent = prevSpentByCategory[b.category_id] || 0
+      const surplus = b.amount - prevSpent
+      rolloverAmount = surplus > 0 ? surplus : 0
+    }
+
     return calculateBudgetDetails(
       {
         ...b,
@@ -76,7 +109,8 @@ export async function GET() {
         category_type: b.categories?.type || "expense",
         categories: undefined,
       },
-      spent
+      spent,
+      rolloverAmount
     )
   })
 
@@ -108,7 +142,7 @@ export async function POST(request: Request) {
     )
   }
 
-  const { category_id, amount } = validationResult.data
+  const { category_id, amount, rollover } = validationResult.data
 
   // Verify category belongs to user and is an expense category
   const { data: category, error: categoryError } = await supabaseAdmin
@@ -152,7 +186,7 @@ export async function POST(request: Request) {
       category_id,
       amount,
       period: "MONTHLY",
-      rollover: false,
+      rollover: rollover ?? false,
     })
     .select(`
       *,

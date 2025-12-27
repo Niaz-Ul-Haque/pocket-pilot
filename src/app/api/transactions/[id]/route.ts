@@ -180,7 +180,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
 /**
  * DELETE /api/transactions/[id]
- * Delete a transaction
+ * Delete a transaction (also deletes linked transaction for transfers)
  */
 export async function DELETE(request: Request, { params }: RouteParams) {
   const session = await auth()
@@ -190,16 +190,30 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
   const { id } = await params
 
-  // Verify the transaction belongs to the user
+  // Verify the transaction belongs to the user and get linked transaction info
   const { data: existing, error: fetchError } = await supabaseAdmin
     .from("transactions")
-    .select("id")
+    .select("id, is_transfer, linked_transaction_id")
     .eq("id", id)
     .eq("user_id", session.user.id)
     .single()
 
   if (fetchError || !existing) {
     return NextResponse.json({ error: "Transaction not found" }, { status: 404 })
+  }
+
+  // If this is a transfer with a linked transaction, delete the linked one first
+  if (existing.is_transfer && existing.linked_transaction_id) {
+    const { error: linkedError } = await supabaseAdmin
+      .from("transactions")
+      .delete()
+      .eq("id", existing.linked_transaction_id)
+      .eq("user_id", session.user.id)
+
+    if (linkedError) {
+      console.error("Failed to delete linked transaction:", linkedError)
+      // Continue anyway to delete the main transaction
+    }
   }
 
   const { error } = await supabaseAdmin

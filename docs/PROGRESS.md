@@ -1,6 +1,6 @@
 # Implementation Progress
 
-**Last Updated:** 2025-12-26
+**Last Updated:** 2025-12-27
 
 Track story completion status. This file reflects the actual implementation state.
 
@@ -85,6 +85,10 @@ Track story completion status. This file reflects the actual implementation stat
 | public.bills | ✅ | ✅ | 006_bills.sql | Matches spec |
 | public.user_profiles | ✅ | ✅ | 007_user_profiles.sql | Onboarding status, budgeting framework, display name |
 | public.chat_messages | ✅ | ✅ | 008_chat_messages.sql | AI chat conversation history |
+| public.chat_conversations | ✅ | ✅ | 009_chat_conversations.sql | Chat conversation metadata |
+| public.tags | ✅ | ✅ | 011_tags.sql | User-defined transaction tags |
+| public.transaction_tags | ✅ | ✅ | 011_tags.sql | Junction table for tag assignments |
+| public.recurring_transactions | ✅ | ✅ | 012_recurring_transactions.sql | Recurring transaction templates |
 
 ---
 
@@ -105,6 +109,12 @@ Track story completion status. This file reflects the actual implementation stat
 | BillForm | src/components/forms/bill-form.tsx | ✅ |
 | MarkPaidForm | src/components/forms/mark-paid-form.tsx | ✅ |
 | CsvImportForm | src/components/forms/csv-import-form.tsx | ✅ |
+| TransferForm | src/components/forms/transfer-form.tsx | ✅ |
+| TagForm | src/components/forms/tag-form.tsx | ✅ |
+| RecurringTransactionForm | src/components/forms/recurring-transaction-form.tsx | ✅ |
+| TagManagerModal | src/components/tag-manager-modal.tsx | ✅ |
+| TagPicker | src/components/tag-picker.tsx | ✅ |
+| NotificationBell | src/components/notification-bell.tsx | ✅ |
 | GoogleSigninButton | src/components/google-signin-button.tsx | ✅ |
 | LogoutButton | src/components/logout-button.tsx | ✅ |
 | Providers | src/components/providers.tsx | ✅ |
@@ -133,7 +143,19 @@ Track story completion status. This file reflects the actual implementation stat
 | /api/bills | GET, POST | ✅ | List/create bills |
 | /api/bills/[id] | GET, PUT, DELETE | ✅ | Individual bill ops (PUT for mark paid) |
 | /api/chat | POST | ✅ | AI chat with streaming (Vercel AI SDK v6) |
+| /api/chat/conversations | GET, POST | ✅ | List/create chat conversations |
+| /api/chat/conversations/[id] | GET, PUT, DELETE | ✅ | Individual conversation ops |
+| /api/chat/conversations/[id]/messages | GET, POST | ✅ | Conversation messages |
 | /api/profile | GET, POST, PUT | ✅ | User profile and onboarding |
+| /api/notifications | GET | ✅ | Aggregated bill + budget alerts |
+| /api/export | GET | ✅ | Export transactions as CSV/JSON |
+| /api/transactions/transfer | POST | ✅ | Create linked transfer transactions |
+| /api/tags | GET, POST | ✅ | List/create tags |
+| /api/tags/[id] | GET, PUT, DELETE | ✅ | Individual tag ops |
+| /api/transactions/[id]/tags | GET, POST, DELETE | ✅ | Manage tags on transactions |
+| /api/recurring-transactions | GET, POST | ✅ | List/create recurring transactions |
+| /api/recurring-transactions/[id] | GET, PUT, DELETE | ✅ | Individual recurring transaction ops |
+| /api/recurring-transactions/generate | POST | ✅ | Auto-generate due transactions |
 
 ---
 
@@ -149,6 +171,7 @@ Track story completion status. This file reflects the actual implementation stat
 | Goals | /dashboard/goals | ✅ | Active/completed sections |
 | Bills | /dashboard/bills | ✅ | Urgent/upcoming sections, summary cards |
 | My Account | /dashboard/account | ✅ | Profile settings, display name, budgeting framework |
+| Recurring | /dashboard/recurring | ✅ | Recurring transactions with auto-generate |
 | Onboarding | /onboarding | ✅ | 2-step flow for new users |
 
 ---
@@ -166,6 +189,8 @@ Track story completion status. This file reflects the actual implementation stat
 | User Profile schemas | src/lib/validators/user-profile.ts | ✅ |
 | Chat schemas | src/lib/validators/chat.ts | ✅ |
 | CSV Import schemas | src/lib/validators/csv-import.ts | ✅ |
+| Tag schemas | src/lib/validators/tag.ts | ✅ |
+| Recurring Transaction schemas | src/lib/validators/recurring-transaction.ts | ✅ |
 
 ---
 
@@ -200,7 +225,10 @@ src/
 │   └── page.tsx                   ✅ Landing page
 ├── components/
 │   ├── ui/                        ✅ 40 shadcn/ui components
-│   ├── forms/                     ✅ 9 form components (incl. CSV import)
+│   ├── forms/                     ✅ 10 form components (incl. CSV import, tag form)
+│   ├── tag-manager-modal.tsx      ✅ Tag CRUD modal
+│   ├── tag-picker.tsx             ✅ Tag selector for transactions
+│   ├── notification-bell.tsx      ✅ Navbar notification bell
 │   ├── google-signin-button.tsx   ✅
 │   ├── logout-button.tsx          ✅
 │   └── providers.tsx              ✅
@@ -208,7 +236,15 @@ src/
 │   ├── auth.ts                    ✅ NextAuth config
 │   ├── supabase.ts                ✅ Supabase client
 │   ├── utils.ts                   ✅ cn() helper
+│   ├── errors.ts                  ✅ Standardized error responses
 │   └── validators/                ✅ 9 Zod schema files
+├── hooks/
+│   ├── index.ts                   ✅ Hook exports
+│   ├── use-api-query.ts           ✅ GET requests with loading/error
+│   ├── use-api-mutation.ts        ✅ POST/PUT/DELETE mutations
+│   ├── use-form-errors.ts         ✅ Zod validation integration
+│   ├── use-speech-recognition.ts  ✅ Speech-to-text hook (v1.1)
+│   └── use-speech-synthesis.ts    ✅ Text-to-speech hook (v1.1)
 ├── middleware.ts                  ✅ Auth middleware + onboarding
 └── types/
     └── next-auth.d.ts             ✅ Session type extension
@@ -226,8 +262,12 @@ src/
 | 004_budgets.sql | Budgets table | ✅ Applied |
 | 005_goals.sql | Goals + contributions tables | ✅ Applied |
 | 006_bills.sql | Bills table | ✅ Applied |
-| 007_user_profiles.sql | User profiles for onboarding | ✅ Ready to apply |
-| 008_chat_messages.sql | Chat message history | ✅ Ready to apply |
+| 007_user_profiles.sql | User profiles for onboarding | ✅ Applied |
+| 008_chat_messages.sql | Chat message history | ✅ Applied |
+| 009_chat_conversations.sql | Chat conversations | ✅ Applied |
+| 010_transfer_linking.sql | Transfer transaction linking | ✅ Ready to apply |
+| 011_tags.sql | Tags system | ✅ Ready to apply |
+| 012_recurring_transactions.sql | Recurring transactions + link column | ✅ Ready to apply |
 
 ---
 
@@ -241,10 +281,27 @@ src/
 
 ### AI Chat Integration
 - Vercel AI SDK v6 with TextStreamChatTransport
-- OpenAI gpt-4o-mini model
-- Tools: add_transaction, get_spending_summary, get_budget_status, add_goal_contribution
+- Z.AI provider (OpenAI-compatible) with glm-4-32b-0414-128k model
+- Core Tools: add_transaction, get_spending_summary, get_budget_status, add_goal_contribution, add_bill
+- Enhanced Tools (v1.1): get_spending_trends, get_forecast, get_suggestions
 - Embedded in dashboard as a widget
 - Category suggestion from transaction descriptions
+- Conversation history persistence
+
+### Enhanced AI Tools (v1.1)
+- **get_spending_trends**: Month-over-month spending comparison, trend direction analysis
+- **get_forecast**: End-of-month spending projection based on current pace, budget comparison
+- **get_suggestions**: Personalized financial recommendations based on budgets, goals, bills, and spending patterns
+- **add_recurring_transaction**: Create recurring transactions via chat
+
+### Recurring Transactions (v1.1)
+- Database table with frequency (weekly, biweekly, monthly, yearly)
+- Full CRUD API with validation
+- Generate endpoint to auto-create due transactions
+- Dashboard page with summary stats and due alerts
+- Form component with expense/income type selection
+- Quick action link in main dashboard
+- AI tool integration for creating via chat
 
 ### CSV Import
 - Multi-step wizard: upload, mapping, preview, import
@@ -268,6 +325,93 @@ src/
 - Real-time balance display in accounts page
 - Color-coded balances (green positive, red negative)
 
+### Notification Bell (v1.1)
+- Bell icon in navbar with badge count
+- Aggregates bill alerts (overdue, due-today, due-soon)
+- Aggregates budget alerts (over, warning 90%+)
+- Click navigates to relevant page (bills or budgets)
+- Red badge for critical, yellow for warnings
+
+### Data Export (v1.1)
+- Export transactions as CSV or JSON
+- Dropdown in transactions page
+- Includes date, description, amount, type, category, account
+
+### Budget Rollover (v1.1)
+- Toggle on budget form to enable rollover
+- Unused budget carries over to next month
+- Shows rollover amount in budget details
+
+### Transfer Linking (v1.1)
+- Transfer button in transactions page
+- Creates paired linked transactions
+- One negative (from account), one positive (to account)
+- linked_transaction_id column for pairing
+
+### Tags System (v1.1)
+- User-defined tags with custom colors
+- Tags table with RLS policies
+- Transaction-tag junction table
+- API for tag CRUD and assignment
+- Supports multiple tags per transaction
+- Tag management modal with CRUD operations
+- Tag picker component in transaction form
+- Tags displayed as colored badges in transaction list
+- Tag filtering in transactions page
+
+### Transfer Linking UI (v1.1)
+- Linked account name displayed in transaction list
+- "→ AccountName" for outbound transfers
+- Paired delete for linked transfer transactions
+
+### Budget Rollover Display (v1.1)
+- Rollover badge indicator on budget cards
+- Shows "Base + Rollover = Effective Budget" when rollover active
+- Effective budget used for progress calculations
+
+### Custom Hooks + Error Handling (v1.1)
+- **Error Utilities** (`src/lib/errors.ts`): Standardized API error responses
+  - `unauthorized()`, `forbidden()`, `notFound()`, `badRequest()`, `validationError()`, `conflict()`, `internalError()`
+  - `handleApiError()` for consistent error logging
+  - ErrorCode enum for typed error codes
+- **useApiQuery Hook** (`src/hooks/use-api-query.ts`): Data fetching with loading/error states
+  - Auto-fetch on mount, manual refetch, skip option
+  - Callbacks for success/error handling
+- **useApiMutation Hook** (`src/hooks/use-api-mutation.ts`): Mutations (POST/PUT/DELETE) with loading/error states
+  - Supports all HTTP methods, success/error callbacks
+  - `useApiDelete` convenience wrapper
+- **useFormErrors Hook** (`src/hooks/use-form-errors.ts`): Zod validation integration
+  - Field-level error tracking, manual error setting
+  - `validate()`, `hasError()`, `getError()`, `clearErrors()`
+- Migrated `/api/accounts` route as reference pattern
+
+### Voice Input (v1.1)
+- Speech-to-text for AI chat using Web Speech API
+- Custom hook `useSpeechRecognition` for cross-browser support
+- Microphone button in chat input area
+- Real-time transcript display while listening
+- Error handling for permission denied, no speech detected, etc.
+
+### Voice Output (v1.1)
+- Text-to-speech for AI responses using Web Speech Synthesis API
+- Custom hook `useSpeechSynthesis` for cross-browser support
+- Voice settings popover in chat modal header
+- Enable/disable voice output toggle
+- Auto-speak toggle for automatic TTS on new responses
+- Per-message speak button on assistant messages
+- Stop/pause functionality
+
+### Transactions Pagination (v1.1)
+- Server-side pagination with limit/offset parameters
+- API returns total count for pagination metadata
+- 25 items per page default
+- Pagination controls: first, prev, next, last buttons
+- "Showing X to Y of Z transactions" indicator
+- Server-side filtering (account, category, search)
+- Client-side tag filtering (separate fetch)
+- Debounced search to reduce API calls
+- Page reset on filter changes
+
 ---
 
 ## Audit Log
@@ -276,3 +420,9 @@ src/
 |------|---------|---------|
 | 2025-12-26 | Claude | Initial comprehensive audit. Found 10/13 stories complete, 1 partial, 3 missing. |
 | 2025-12-26 | Claude | Implemented Stories 1, 5, 6. Fixed account balance. Dashboard revamp. My Account page. All 13 stories now complete. Build passes with no lint errors. |
+| 2025-12-27 | Claude | Bug fixes: AI chat bill creation (field name mismatch), sidebar overflow, confirmation handling. New features: notification bell, data export (CSV/JSON), budget rollover, transfer linking, tags system. Updated README.md with setup docs. Created next-tasks.md. |
+| 2025-12-27 | Claude | UI Enhancements: Tags system UI (management modal, picker, form integration, list display, filtering). Transfer linking UI (linked account display, paired delete). Budget rollover display (rollover badge, effective budget calculation). Build passes with no lint errors. |
+| 2025-12-27 | Claude | Enhanced AI Tools (v1.1): Added 3 new AI tools - get_spending_trends (month-over-month analysis), get_forecast (end-of-month projection), get_suggestions (personalized recommendations). Build passes with no lint errors. |
+| 2025-12-27 | Claude | Recurring Transactions (v1.1): Full implementation with database migration, validator, API routes (CRUD + generate), form component, dashboard page, nav link, AI tool integration. Build passes with no lint errors. |
+| 2025-12-27 | Claude | Custom Hooks + Error Handling (v1.1): Created standardized error utilities (src/lib/errors.ts), custom hooks (useApiQuery, useApiMutation, useFormErrors in src/hooks/). Migrated /api/accounts as reference. Build passes with no lint errors. |
+| 2025-12-27 | Claude | Voice Input + Voice Output + Pagination (v1.1): Implemented speech-to-text (useSpeechRecognition hook, mic button in chat), text-to-speech (useSpeechSynthesis hook, voice settings, auto-speak, per-message playback), and transactions pagination (server-side with 25/page, pagination controls, server-side filtering). v1.1 complete! Build passes with no lint errors. |

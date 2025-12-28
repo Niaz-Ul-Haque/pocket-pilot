@@ -497,6 +497,16 @@ When enabled:
 - **Region**: US East (close to Supabase)
 - **Serverless timeout**: 10s (default)
 
+### CI/CD (GitHub Actions)
+
+- **PR checks**: lint, type check, build, and tests (if present)
+- **Security**: npm audit (high+) and CodeQL scanning
+- **Bundle size**: PR comment with size diff and largest files
+- **Automation**: Dependabot updates and PR auto-labeling
+- **Preview deploys**: Vercel preview deployments on PRs
+- **Production deploy**: manual comment trigger `/deploy to production via master` on a master commit
+- **Releases**: auto-generated GitHub releases on version tags
+
 ### Supabase Configuration
 
 - **Region**: North America (US East or Canada if available)

@@ -1,0 +1,36 @@
+name: Vercel Production Deploy
+
+on:
+  commit_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  deploy-production:
+    if: |
+      contains(github.event.comment.body, '/deploy to production via master') &&
+      (github.event.comment.author_association == 'OWNER' ||
+       github.event.comment.author_association == 'MEMBER' ||
+       github.event.comment.author_association == 'COLLABORATOR')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.comment.commit_id }}
+          fetch-depth: 0
+      - name: Verify commit on master
+        run: |
+          git fetch origin master --depth=1
+          git merge-base --is-ancestor ${{ github.event.comment.commit_id }} origin/master
+      - name: Deploy to Vercel (prod)
+        uses: amondnet/vercel-action@v20
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: "--prod"

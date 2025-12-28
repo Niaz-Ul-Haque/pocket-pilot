@@ -241,32 +241,83 @@ This ensures production deployments are intentional and only happen after explic
 
 ## TIER 3: UX Improvements (12 Features)
 
+**Status: 12/12 Complete**
+
 ### Navigation & Speed
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| Keyboard Shortcuts | Power user shortcuts (N=new transaction, G+T=go to transactions) | Pending |
-| Command Palette | Cmd/Ctrl+K to search and execute any action | Pending |
-| Quick Add FAB | Floating action button for instant transaction entry | Pending |
-| Global Search | Search across all entities (transactions, bills, goals, categories) | Pending |
+| Keyboard Shortcuts | Power user shortcuts (N=new transaction, G+T=go to transactions) | ✅ Complete |
+| Command Palette | Cmd/Ctrl+K to search and execute any action | ✅ Complete |
+| Quick Add FAB | Floating action button for instant transaction entry | ✅ Complete |
+| Global Search | Search across all entities (transactions, bills, goals, categories) | ✅ Complete |
 
 ### Personalization
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| Dark Mode Toggle | Manual light/dark theme switching with system preference option | Pending |
-| Dashboard Customization | Drag-and-drop to rearrange, show/hide widgets | Pending |
-| Default Account Setting | Set preferred default account for new transactions | Pending |
+| Dark Mode Toggle | Manual light/dark theme switching with system preference option | ✅ Complete |
+| Dashboard Customization | Drag-and-drop to rearrange, show/hide widgets | ✅ Complete |
+| Default Account Setting | Set preferred default account for new transactions | ✅ Complete |
 
 ### Convenience
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| Undo/Redo Actions | Undo accidental deletions with toast notification | Pending |
-| Recent Actions History | View and potentially revert recent changes | Pending |
-| Favorites/Pinned Items | Pin important transactions, goals, or bills for quick access | Pending |
-| Mobile PWA Improvements | Better touch targets, swipe actions, offline support | Pending |
-| Onboarding Improvements | Better first-time user flow with guided tour | Pending |
+| Undo/Redo Actions | Undo accidental deletions with toast notification | ✅ Complete |
+| Recent Actions History | View and potentially revert recent changes | ✅ Complete |
+| Favorites/Pinned Items | Pin important transactions, goals, or bills for quick access | ✅ Complete |
+| Mobile PWA Improvements | Better touch targets, swipe actions, offline support | ✅ Complete |
+| Onboarding Improvements | Better first-time user flow with guided tour | ✅ Complete |
+
+### Implementation Details
+
+**New Dependencies:**
+- `next-themes` - Theme management with system preference support
+
+**New Hooks:**
+- `useKeyboardShortcuts` - Global keyboard shortcut handler with "g" mode navigation
+- `useOnboardingTour` - Auto-show tour for new users
+
+**New Components:**
+- `CommandPalette` - Cmd/Ctrl+K searchable command interface
+- `QuickAddFAB` - Floating action button with expandable menu
+- `ThemeToggle` - Light/dark/system theme switcher dropdown
+- `KeyboardShortcutsDialog` - Help dialog showing all shortcuts
+- `DashboardSettings` - Widget visibility and ordering settings
+- `OnboardingTour` - Multi-step guided tour for new users
+- `RecentActionsDialog` - View and undo recent actions
+- `DashboardShell` - Client wrapper integrating all dashboard features
+
+**New API Endpoint:**
+- `GET /api/search?q=query` - Global search across transactions, goals, bills, categories, accounts, budgets
+
+**Updated Providers:**
+- `ActionHistoryContext` - Tracks recent CRUD actions for undo support
+- `UserPreferencesContext` - Client-side preferences (default account, pinned items, dashboard widgets)
+
+**PWA Improvements:**
+- Added `manifest.json` with app metadata and shortcuts
+- Added viewport meta tags for mobile optimization
+- Added theme color meta tags for system integration
+
+**Keyboard Shortcuts:**
+- `⌘/Ctrl + K` - Open command palette
+- `/` - Open search
+- `?` - Show keyboard shortcuts help
+- `n` - New transaction
+- `g + h` - Go to dashboard (home)
+- `g + t` - Go to transactions
+- `g + b` - Go to budgets
+- `g + g` - Go to goals
+- `g + i` - Go to bills
+- `g + a` - Go to accounts
+- `g + c` - Go to categories
+- `g + r` - Go to reports
+- `g + y` - Go to analytics
+- `g + e` - Go to recurring
+- `g + s` - Go to settings
+- `g + m` - Go to templates
 
 ---
 

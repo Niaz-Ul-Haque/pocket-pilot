@@ -13,8 +13,17 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { LogoutButton } from "@/components/logout-button"
 import { NotificationBell } from "@/components/notification-bell"
+import { ThemeToggle } from "@/components/theme-toggle"
+import { RecentActionsDialog } from "@/components/recent-actions-dialog"
+import { DashboardShell } from "@/components/dashboard-shell"
 import { redirect } from "next/navigation"
-import { User } from "lucide-react"
+import { User, Keyboard, Command } from "lucide-react"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 export default async function DashboardLayout({
   children,
@@ -53,12 +62,36 @@ export default async function DashboardLayout({
             <h1 className="text-xl font-bold">Pocket Pilot</h1>
           </Link>
 
+          {/* Center - Command Palette Hint */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground bg-muted/50 hover:bg-muted rounded-lg border transition-colors">
+                  <Command className="h-3.5 w-3.5" />
+                  <span>Search or jump to...</span>
+                  <kbd className="ml-2 pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-background px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+                    <span className="text-xs">⌘</span>K
+                  </kbd>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Open command palette (⌘K)</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
           {/* User Menu */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {/* Theme Toggle */}
+            <ThemeToggle />
+
+            {/* Recent Actions */}
+            <RecentActionsDialog />
+
             {/* Notification Bell */}
             <NotificationBell />
 
-            <div className="hidden sm:block text-right">
+            <div className="hidden sm:block text-right ml-2">
               <p className="text-sm font-medium">{session.user.name}</p>
               <p className="text-xs text-muted-foreground">
                 {session.user.email}
@@ -94,6 +127,13 @@ export default async function DashboardLayout({
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
+                <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                  <p className="flex items-center gap-2">
+                    <Keyboard className="h-3 w-3" />
+                    Press <kbd className="px-1 py-0.5 rounded border bg-muted text-[10px]">?</kbd> for shortcuts
+                  </p>
+                </div>
+                <DropdownMenuSeparator />
                 <LogoutButton />
               </DropdownMenuContent>
             </DropdownMenu>
@@ -101,8 +141,10 @@ export default async function DashboardLayout({
         </div>
       </header>
 
-      {/* Main Content */}
-      <main>{children}</main>
+      {/* Main Content with Shell */}
+      <DashboardShell>
+        <main>{children}</main>
+      </DashboardShell>
     </div>
   )
 }

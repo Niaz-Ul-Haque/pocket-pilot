@@ -12,6 +12,10 @@ import {
   Wallet,
   Save,
   Loader2,
+  Settings,
+  CreditCard,
+  Sparkles,
+  RotateCcw,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -33,6 +37,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
+import { Switch } from "@/components/ui/switch"
 import {
   profileUpdateSchema,
   type ProfileUpdateData,
@@ -41,13 +46,17 @@ import {
   FRAMEWORK_LABELS,
   type BudgetingFramework,
 } from "@/lib/validators/user-profile"
+import { type Account } from "@/lib/validators/account"
+import { useUserPreferences } from "@/components/providers"
 import { format } from "date-fns"
 
 export default function AccountPage() {
   const { data: session } = useSession()
   const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [accounts, setAccounts] = useState<Account[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const { preferences, updatePreferences } = useUserPreferences()
 
   const form = useForm<ProfileUpdateData>({
     resolver: zodResolver(profileUpdateSchema),
@@ -58,11 +67,15 @@ export default function AccountPage() {
   })
 
   useEffect(() => {
-    async function fetchProfile() {
+    async function fetchData() {
       try {
-        const response = await fetch("/api/profile")
-        if (response.ok) {
-          const data = await response.json()
+        const [profileRes, accountsRes] = await Promise.all([
+          fetch("/api/profile"),
+          fetch("/api/accounts"),
+        ])
+
+        if (profileRes.ok) {
+          const data = await profileRes.json()
           setProfile(data.profile)
           if (data.profile) {
             form.reset({
@@ -71,13 +84,18 @@ export default function AccountPage() {
             })
           }
         }
+
+        if (accountsRes.ok) {
+          const accountsData = await accountsRes.json()
+          setAccounts(accountsData)
+        }
       } catch (error) {
-        console.error("Error fetching profile:", error)
+        console.error("Error fetching data:", error)
       } finally {
         setIsLoading(false)
       }
     }
-    fetchProfile()
+    fetchData()
   }, [form])
 
   async function onSubmit(data: ProfileUpdateData) {
@@ -218,6 +236,72 @@ export default function AccountPage() {
               )}
             </Button>
           </form>
+        </CardContent>
+      </Card>
+
+      {/* Preferences Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            App Preferences
+          </CardTitle>
+          <CardDescription>
+            Customize your Pocket Pilot experience
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Default Account */}
+          <div className="space-y-2">
+            <Label htmlFor="default_account">Default Account</Label>
+            <Select
+              value={preferences.defaultAccountId || "none"}
+              onValueChange={(value) =>
+                updatePreferences({ defaultAccountId: value === "none" ? null : value })
+              }
+            >
+              <SelectTrigger id="default_account">
+                <SelectValue placeholder="Select default account" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No default</SelectItem>
+                {accounts.map((account) => (
+                  <SelectItem key={account.id} value={account.id}>
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="h-3 w-3" />
+                      {account.name} ({account.type})
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              This account will be pre-selected when adding new transactions
+            </p>
+          </div>
+
+          <Separator />
+
+          {/* Show Onboarding Tour Again */}
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Onboarding Tour</Label>
+              <p className="text-xs text-muted-foreground">
+                Show the guided tour again to learn about features
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                updatePreferences({ hasSeenOnboardingTour: false })
+                toast.success("Tour reset! Refresh the page to see it.")
+              }}
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Reset Tour
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

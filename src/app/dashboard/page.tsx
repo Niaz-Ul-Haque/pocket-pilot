@@ -52,6 +52,7 @@ import { type Category } from "@/lib/validators/category"
 import { cn } from "@/lib/utils"
 import { AIChatModal } from "@/components/ai-chat-modal"
 import { AIInsightsWidget } from "@/components/ai-insights-widget"
+import { DashboardSettings } from "@/components/dashboard-settings"
 import {
   SpendingTrendChart,
   CategoryBreakdownChart,
@@ -377,6 +378,7 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <DashboardSettings />
           <Button variant="outline" size="sm" asChild>
             <Link href="/dashboard/transactions">
               <Upload className="h-4 w-4 mr-2" />

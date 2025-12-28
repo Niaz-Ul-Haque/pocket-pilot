@@ -435,15 +435,15 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-5xl h-[80vh] p-0 gap-0" hideCloseButton>
-          <div className="flex h-full">
+          <div className="flex h-full overflow-hidden">
             {/* History Sidebar */}
             <div
               className={cn(
-                "border-r bg-muted/30 flex flex-col transition-all duration-300 h-full overflow-hidden",
-                showHistory ? "w-72" : "w-0"
+                "border-r bg-muted/30 flex flex-col transition-all duration-300 overflow-hidden",
+                showHistory ? "w-72 min-h-0" : "w-0"
               )}
             >
-              <div className="p-4 border-b flex items-center justify-between">
+              <div className="p-4 border-b flex items-center justify-between shrink-0">
                 <h3 className="font-semibold flex items-center gap-2">
                   <History className="h-4 w-4" />
                   Chat History
@@ -458,7 +458,7 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
                 </Button>
               </div>
               
-              <ScrollArea className="flex-1">
+              <ScrollArea className="flex-1 min-h-0">
                 <div className="p-2 space-y-1">
                   {conversations.length === 0 ? (
                     <p className="text-xs text-muted-foreground text-center py-4">
@@ -486,7 +486,7 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={(e) => {
                             e.stopPropagation()
                             setDeleteConversationId(conv.id)
@@ -502,8 +502,8 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
             </div>
 
             {/* Chat Area */}
-            <div className="flex-1 flex flex-col min-w-0">
-              <DialogHeader className="p-4 border-b">
+            <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
+              <DialogHeader className="p-4 border-b shrink-0">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Button
@@ -595,7 +595,7 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
               </DialogHeader>
 
               {/* Messages */}
-              <ScrollArea className="flex-1 p-4">
+              <ScrollArea className="flex-1 min-h-0 p-4">
                 {isLoadingHistory ? (
                   <div className="flex items-center justify-center h-full">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -710,7 +710,7 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
               </ScrollArea>
 
               {/* Input */}
-              <div className="p-4 border-t">
+              <div className="p-4 border-t shrink-0">
                 {/* Voice input error message */}
                 {speechError && (
                   <div className="mb-2 p-2 text-xs text-destructive bg-destructive/10 rounded-md">

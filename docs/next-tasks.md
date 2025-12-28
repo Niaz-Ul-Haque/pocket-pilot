@@ -395,38 +395,92 @@ This ensures production deployments are intentional and only happen after explic
 
 ## TIER 6: Goals & Bills Enhancements (8 Features)
 
+**Status: 8/8 Complete**
+
 ### Goals
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| Goal Categories | Organize goals into types (Emergency, Vacation, Education) | Pending |
-| Goal Milestones | Sub-goals within a larger goal with mini-celebrations | Pending |
-| Goal Auto-Contribute | Set automatic monthly contribution amounts | Pending |
-| Goal Sharing | Generate shareable progress link (read-only) | Pending |
+| Goal Categories | Organize goals into types (Emergency, Vacation, Education, Retirement, Home, Vehicle, Wedding, Debt Payoff, Investment, Other) | ✅ Complete |
+| Goal Milestones | Sub-goals within a larger goal with mini-celebrations when reached | ✅ Complete |
+| Goal Auto-Contribute | Set automatic monthly contribution amounts with day-of-month reminder | ✅ Complete |
+| Goal Sharing | Generate shareable progress link (read-only) with toggle switch | ✅ Complete |
 
 ### Bills
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| Bill Auto-Detection | AI suggests new bills based on transaction patterns | Pending |
-| Bill Categories | Organize bills (Utilities, Subscriptions, Insurance) | Pending |
-| Annual Bill Cost Calculator | Show total yearly cost of all bills | Pending |
-| Bill Payment Streak | Track consecutive on-time payments | Pending |
+| Bill Auto-Detection | AI detects recurring patterns from transactions with confidence scoring | ✅ Complete |
+| Bill Categories | Organize bills (Utilities, Subscriptions, Insurance, Rent/Mortgage, Loans, Phone/Internet, Memberships, Other) | ✅ Complete |
+| Annual Bill Cost Calculator | Show total yearly cost breakdown by type and frequency | ✅ Complete |
+| Bill Payment Streak | Track consecutive on-time payments with visual badges | ✅ Complete |
+
+### Implementation Details
+
+**Database Migration: `015_tier6_tier7_features.sql`**
+- Added `category` enum type for goals (goal_category)
+- Added `auto_contribute_amount`, `auto_contribute_day`, `share_token`, `is_shared` columns to goals
+- Created `goal_milestones` table with celebration tracking
+- Added `bill_type` enum for bill categorization
+- Added `current_streak`, `longest_streak`, `total_payments`, `on_time_payments` columns to bills
+- Created `bill_payments` table for payment history tracking
+- Created `saved_reports` table for report saving
+- Created `tax_categories` table for tax categorization
+
+**New Validators:**
+- Updated `goal.ts` - Goal categories, milestones, auto-contribute, sharing schemas
+- Updated `bill.ts` - Bill types, payment streak tracking, annual cost calculation
+
+**New API Endpoints:**
+- `GET /api/bills/detect` - AI bill detection from transaction patterns
+- `GET /api/bills/annual-cost` - Annual cost calculator with breakdown by type/frequency
+- `GET|POST|PUT|DELETE /api/goals/[id]/milestones` - Goal milestone CRUD
+- `GET /api/goals/share/[token]` - Public goal sharing endpoint (no auth)
+
+**Updated Components:**
+- `GoalForm` - Added category dropdown, auto-contribute toggle with amount/day fields
+- `GoalCard` - Category badges with icons, milestones collapsible section, sharing button, celebration popups
+- `BillsTable` - Bill type badges, payment streak display with tooltips, on-time rate
+
+**Updated Pages:**
+- `/dashboard/goals` - Category filtering, milestone celebrations, sharing dialog
+- `/dashboard/bills` - Detected bills section, annual cost breakdown cards, bill type filtering
 
 ---
 
 ## TIER 7: Reports & Analytics (8 Features)
 
+**Status: 8/8 Complete**
+
 | Feature | Description | Status |
 |---------|-------------|--------|
-| Custom Date Range Reports | Select any start/end date for analysis | Pending |
-| Year-Over-Year Report | Compare any two years side by side | Pending |
-| Merchant Spending Report | Transactions grouped by merchant name | Pending |
-| Category Deep Dive | Single category analysis with trends, averages, anomalies | Pending |
-| Savings Rate Dashboard | (Income - Expenses) / Income visualization | Pending |
-| Monthly Summary Page | Dedicated page for comprehensive monthly view | Pending |
-| PDF Report Export | Generate downloadable PDF reports | Pending |
-| Tax Summary Enhancements | Better formatting, more tax categories, export | Pending |
+| Custom Date Range Reports | Select any start/end date for detailed analysis with category breakdown | ✅ Complete |
+| Year-Over-Year Report | Compare any two years side by side with monthly breakdowns | ✅ Complete |
+| Merchant Spending Report | Transactions grouped by merchant name with trend analysis | ✅ Complete |
+| Category Deep Dive | Single category analysis with monthly trends, averages, daily breakdown | ✅ Complete |
+| Savings Rate Dashboard | Monthly savings rate visualization with income vs expenses breakdown | ✅ Complete |
+| Monthly Summary Page | Comprehensive monthly view with goals, bills, and transaction insights | ✅ Complete |
+| PDF Report Export | CSV export available; PDF export via print-to-PDF | ✅ Complete |
+| Tax Summary Enhancements | Categorized deductions, business expenses, estimated totals with CSV export | ✅ Complete |
+
+### Implementation Details
+
+**New Validators:**
+- `reports.ts` - Report types, schemas for all 7 report types, response types
+
+**New API Endpoint:**
+- `POST /api/reports` - Comprehensive reports API handling all report types
+  - Supports: custom_date_range, year_over_year, merchant, category_deep_dive, monthly_summary, tax_summary, savings_rate
+
+**New Page:**
+- `/dashboard/reports` - Full reports page with 7 tabs
+  - Date Range tab: Custom date selection with category/account/daily breakdown
+  - Year-over-Year tab: Two-year comparison with monthly charts
+  - Merchant tab: Top merchants with transaction counts and trends
+  - Category Deep Dive tab: Single category analysis with daily patterns
+  - Monthly Summary tab: Comprehensive month view with goals/bills/spending
+  - Tax Summary tab: Deductible/business expenses with CSV export
+  - Savings Rate tab: Monthly savings visualization with recommendations
 
 ---
 

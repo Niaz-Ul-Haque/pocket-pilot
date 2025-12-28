@@ -24,7 +24,9 @@
       "Bash(npx tsc:*)",
       "WebFetch(domain:ai-sdk.dev)",
       "Bash(cd:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(npx next lint:*)",
+      "Bash(npx eslint:*)"
     ]
   },
   "outputStyle": "default"

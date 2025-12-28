@@ -1,5 +1,5 @@
-if [ -d .next/diagnostics ]; then
-  rm -rf .next/diagnostics
+if [ -d .next ]; then
+  rm -rf .next
 fi
 npm run build
 npm run typecheck

@@ -43,7 +43,7 @@ FAIL: update stuff
 - File: `.husky/pre-push`
 - Runs: `npm run build` and `npm run typecheck`
 - Behavior: If either fails, the push is blocked.
-- Note: Removes `.next/diagnostics` before the build to avoid Windows readlink errors.
+- Note: Removes `.next` before the build to avoid Windows readlink errors.
 
 ### post-merge
 - File: `.husky/post-merge`

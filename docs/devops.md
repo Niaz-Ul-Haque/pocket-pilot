@@ -43,7 +43,8 @@ FAIL: update stuff
 - File: `.husky/pre-push`
 - Runs: `npm run build` and `npm run typecheck`
 - Behavior: If either fails, the push is blocked.
-- Note: Removes `.next` before the build to avoid Windows readlink errors.
+- Note: Attempts to remove `.next` before the build to avoid Windows readlink errors.
+- If `.next` cannot be removed, the hook skips the build and runs typecheck only.
 
 ### post-merge
 - File: `.husky/post-merge`

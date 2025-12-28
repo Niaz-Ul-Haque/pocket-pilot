@@ -1,5 +1,12 @@
 if [ -d .next ]; then
   rm -rf .next
 fi
+
+if [ -d .next ]; then
+  echo "Warning: unable to remove .next; skipping build."
+  npm run typecheck
+  exit 0
+fi
+
 npm run build
 npm run typecheck

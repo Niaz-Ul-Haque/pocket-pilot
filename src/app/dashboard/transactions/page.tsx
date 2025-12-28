@@ -13,6 +13,13 @@ import {
   ArrowDownCircle,
   ArrowRightLeft,
   Upload,
+  Download,
+  FileJson,
+  FileSpreadsheet,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -64,7 +71,9 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { TransactionForm } from "@/components/forms/transaction-form"
+import { TransferForm } from "@/components/forms/transfer-form"
 import { CsvImportForm } from "@/components/forms/csv-import-form"
+import { TagManagerModal } from "@/components/tag-manager-modal"
 import {
   type TransactionWithDetails,
   formatAmount,
@@ -72,53 +81,120 @@ import {
 } from "@/lib/validators/transaction"
 import type { Account } from "@/lib/validators/account"
 import type { Category } from "@/lib/validators/category"
+import { type Tag, getTagStyle } from "@/lib/validators/tag"
+
+// Extended type with tags
+interface TransactionWithTags extends TransactionWithDetails {
+  tags?: Array<{ id: string; name: string; color: string }>
+  linked_account_name?: string
+}
 
 export default function TransactionsPage() {
-  const [transactions, setTransactions] = useState<TransactionWithDetails[]>([])
+  const [transactions, setTransactions] = useState<TransactionWithTags[]>([])
   const [accounts, setAccounts] = useState<Account[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [tags, setTags] = useState<Tag[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<
-    TransactionWithDetails | undefined
+    TransactionWithTags | undefined
   >()
   const [deletingTransaction, setDeletingTransaction] = useState<
-    TransactionWithDetails | undefined
+    TransactionWithTags | undefined
   >()
   const [isDeleting, setIsDeleting] = useState(false)
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
+  const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
+  const [isTagManagerOpen, setIsTagManagerOpen] = useState(false)
 
   // Filters
   const [searchTerm, setSearchTerm] = useState("")
   const [filterAccount, setFilterAccount] = useState<string>("all")
   const [filterCategory, setFilterCategory] = useState<string>("all")
+  const [filterTag, setFilterTag] = useState<string>("all")
 
+  // Pagination
+  const [page, setPage] = useState(1)
+  const [pageSize] = useState(25)
+  const [totalCount, setTotalCount] = useState(0)
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+
+  // Debounce search term
   useEffect(() => {
-    fetchData()
-  }, [])
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm)
+      setPage(1) // Reset to first page on search
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setPage(1)
+  }, [filterAccount, filterCategory])
 
   async function fetchData() {
     try {
-      // Fetch transactions, accounts, and categories in parallel
-      const [transRes, accountsRes, categoriesRes] = await Promise.all([
-        fetch("/api/transactions"),
+      // Build query params for transactions
+      const offset = (page - 1) * pageSize
+      const params = new URLSearchParams({
+        limit: pageSize.toString(),
+        offset: offset.toString(),
+        withCount: "true",
+      })
+
+      // Add server-side filters
+      if (filterAccount !== "all") {
+        params.set("accountId", filterAccount)
+      }
+      if (filterCategory !== "all") {
+        params.set("categoryId", filterCategory)
+      }
+      if (debouncedSearch) {
+        params.set("search", debouncedSearch)
+      }
+
+      // Fetch transactions, accounts, categories, and tags in parallel
+      const [transRes, accountsRes, categoriesRes, tagsRes] = await Promise.all([
+        fetch(`/api/transactions?${params.toString()}`),
         fetch("/api/accounts"),
         fetch("/api/categories"),
+        fetch("/api/tags"),
       ])
 
       if (!transRes.ok) throw new Error("Failed to fetch transactions")
       if (!accountsRes.ok) throw new Error("Failed to fetch accounts")
       if (!categoriesRes.ok) throw new Error("Failed to fetch categories")
 
-      const [transData, accountsData, categoriesData] = await Promise.all([
+      const [transData, accountsData, categoriesData, tagsData] = await Promise.all([
         transRes.json(),
         accountsRes.json(),
         categoriesRes.json(),
+        tagsRes.ok ? tagsRes.json() : [],
       ])
 
-      setTransactions(transData)
+      // Extract pagination data
+      const { transactions: transactionsArray, pagination } = transData
+      setTotalCount(pagination?.total ?? 0)
+
+      // Fetch tags for each transaction
+      const transWithTags = await Promise.all(
+        transactionsArray.map(async (t: TransactionWithTags) => {
+          try {
+            const tagsRes = await fetch(`/api/transactions/${t.id}/tags`)
+            const txTags = tagsRes.ok ? await tagsRes.json() : []
+            return { ...t, tags: txTags }
+          } catch {
+            return { ...t, tags: [] }
+          }
+        })
+      )
+
+      setTransactions(transWithTags)
       setAccounts(accountsData)
       setCategories(categoriesData)
+      setTags(tagsData)
     } catch (error) {
       console.error("Failed to fetch data:", error)
       toast.error("Failed to load transactions")
@@ -126,6 +202,12 @@ export default function TransactionsPage() {
       setIsLoading(false)
     }
   }
+
+  // Fetch data when pagination or filters change
+  useEffect(() => {
+    fetchData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, pageSize, debouncedSearch, filterAccount, filterCategory])
 
   function handleAddTransaction() {
     setEditingTransaction(undefined)
@@ -181,26 +263,57 @@ export default function TransactionsPage() {
     }
   }
 
-  // Filter transactions
+  async function handleExport(format: "csv" | "json") {
+    setIsExporting(true)
+    try {
+      const response = await fetch(`/api/export?format=${format}&type=transactions`)
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to export transactions")
+      }
+
+      // Get the filename from the Content-Disposition header
+      const contentDisposition = response.headers.get("Content-Disposition")
+      const filenameMatch = contentDisposition?.match(/filename="(.+)"/)
+      const filename = filenameMatch?.[1] || `transactions.${format}`
+
+      // Create a blob and download it
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+
+      toast.success(`Transactions exported as ${format.toUpperCase()}`)
+    } catch (error) {
+      console.error("Failed to export:", error)
+      toast.error(
+        error instanceof Error ? error.message : "Failed to export transactions"
+      )
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  // Filter transactions (only tags are client-side now, account/category/search are server-side)
   const filteredTransactions = transactions.filter((t) => {
-    // Search filter
-    if (
-      searchTerm &&
-      !t.description?.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      !t.category_name?.toLowerCase().includes(searchTerm.toLowerCase())
-    ) {
-      return false
-    }
-    // Account filter
-    if (filterAccount !== "all" && t.account_id !== filterAccount) {
-      return false
-    }
-    // Category filter
-    if (filterCategory !== "all" && t.category_id !== filterCategory) {
-      return false
+    // Tag filter (client-side since tags are fetched separately)
+    if (filterTag !== "all") {
+      const hasTag = t.tags?.some((tag) => tag.id === filterTag)
+      if (!hasTag) return false
     }
     return true
   })
+
+  // Pagination calculations
+  const totalPages = Math.ceil(totalCount / pageSize)
+  const startItem = (page - 1) * pageSize + 1
+  const endItem = Math.min(page * pageSize, totalCount)
 
   // Get icon for transaction type
   function getTransactionIcon(amount: number, isTransfer: boolean) {
@@ -243,6 +356,35 @@ export default function TransactionsPage() {
             </p>
           </div>
           <div className="flex gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  disabled={transactions.length === 0 || isExporting}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  {isExporting ? "Exporting..." : "Export"}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleExport("csv")}>
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />
+                  Export as CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport("json")}>
+                  <FileJson className="mr-2 h-4 w-4" />
+                  Export as JSON
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              variant="outline"
+              onClick={() => setIsTransferDialogOpen(true)}
+              disabled={accounts.length < 2}
+            >
+              <ArrowRightLeft className="mr-2 h-4 w-4" />
+              Transfer
+            </Button>
             <Button
               variant="outline"
               onClick={() => setIsImportDialogOpen(true)}
@@ -313,6 +455,25 @@ export default function TransactionsPage() {
               ))}
             </SelectContent>
           </Select>
+          <Select value={filterTag} onValueChange={setFilterTag}>
+            <SelectTrigger className="w-full sm:w-[150px]">
+              <SelectValue placeholder="All Tags" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Tags</SelectItem>
+              {tags.map((tag) => (
+                <SelectItem key={tag.id} value={tag.id}>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="h-3 w-3 rounded-full"
+                      style={{ backgroundColor: tag.color }}
+                    />
+                    {tag.name}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Transactions List */}
@@ -322,11 +483,11 @@ export default function TransactionsPage() {
               <Receipt className="h-12 w-12 text-muted-foreground" />
               <h3 className="mt-4 text-lg font-semibold">No transactions yet</h3>
               <p className="mt-2 text-sm text-muted-foreground text-center">
-                {transactions.length === 0
+                {totalCount === 0 && !debouncedSearch && filterAccount === "all" && filterCategory === "all" && filterTag === "all"
                   ? "Start tracking your finances by adding your first transaction."
                   : "No transactions match your filters."}
               </p>
-              {transactions.length === 0 && accounts.length > 0 && (
+              {totalCount === 0 && !debouncedSearch && filterAccount === "all" && filterCategory === "all" && filterTag === "all" && accounts.length > 0 && (
                 <Button className="mt-4" onClick={handleAddTransaction}>
                   <Plus className="mr-2 h-4 w-4" />
                   Add Your First Transaction
@@ -343,6 +504,7 @@ export default function TransactionsPage() {
                     <TableHead className="w-[100px]">Date</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead>Category</TableHead>
+                    <TableHead>Tags</TableHead>
                     <TableHead>Account</TableHead>
                     <TableHead className="text-right">Amount</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
@@ -378,7 +540,34 @@ export default function TransactionsPage() {
                           <span className="text-muted-foreground">—</span>
                         )}
                       </TableCell>
-                      <TableCell>{transaction.account_name}</TableCell>
+                      <TableCell>
+                        {transaction.tags && transaction.tags.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {transaction.tags.map((tag) => (
+                              <Badge
+                                key={tag.id}
+                                style={getTagStyle(tag.color)}
+                                className="text-xs"
+                              >
+                                {tag.name}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span>{transaction.account_name}</span>
+                          {transaction.is_transfer && transaction.linked_transaction_id && (
+                            <span className="text-xs text-muted-foreground">
+                              {transaction.amount < 0 ? "→" : "←"}{" "}
+                              {transaction.linked_account_name || "Linked account"}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell
                         className={`text-right font-medium ${getAmountColorClass(
                           transaction.amount
@@ -434,6 +623,60 @@ export default function TransactionsPage() {
                 </TableBody>
               </Table>
             </CardContent>
+
+            {/* Pagination Controls */}
+            {totalCount > 0 && (
+              <div className="flex items-center justify-between border-t px-4 py-3">
+                <p className="text-sm text-muted-foreground">
+                  Showing {startItem} to {endItem} of {totalCount} transactions
+                </p>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setPage(1)}
+                    disabled={page === 1}
+                  >
+                    <ChevronsLeft className="h-4 w-4" />
+                    <span className="sr-only">First page</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setPage(page - 1)}
+                    disabled={page === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    <span className="sr-only">Previous page</span>
+                  </Button>
+                  <span className="px-3 text-sm">
+                    Page {page} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setPage(page + 1)}
+                    disabled={page >= totalPages}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                    <span className="sr-only">Next page</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setPage(totalPages)}
+                    disabled={page >= totalPages}
+                  >
+                    <ChevronsRight className="h-4 w-4" />
+                    <span className="sr-only">Last page</span>
+                  </Button>
+                </div>
+              </div>
+            )}
           </Card>
         )}
 
@@ -512,6 +755,26 @@ export default function TransactionsPage() {
                 fetchData()
               }}
               onCancel={() => setIsImportDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
+
+        {/* Transfer Dialog */}
+        <Dialog open={isTransferDialogOpen} onOpenChange={setIsTransferDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Transfer Between Accounts</DialogTitle>
+              <DialogDescription>
+                Move money from one account to another.
+              </DialogDescription>
+            </DialogHeader>
+            <TransferForm
+              accounts={accounts}
+              onSuccess={() => {
+                setIsTransferDialogOpen(false)
+                fetchData()
+              }}
+              onCancel={() => setIsTransferDialogOpen(false)}
             />
           </DialogContent>
         </Dialog>

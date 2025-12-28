@@ -21,14 +21,19 @@ export async function GET(request: Request) {
   const search = searchParams.get("search")
   const limit = parseInt(searchParams.get("limit") || "50")
   const offset = parseInt(searchParams.get("offset") || "0")
+  const withCount = searchParams.get("withCount") === "true"
 
+  // Build base query with count option
   let query = supabaseAdmin
     .from("transactions")
-    .select(`
+    .select(
+      `
       *,
       accounts!inner(name),
       categories(name, type)
-    `)
+    `,
+      { count: withCount ? "exact" : undefined }
+    )
     .eq("user_id", session.user.id)
     .order("date", { ascending: false })
     .order("created_at", { ascending: false })
@@ -51,7 +56,7 @@ export async function GET(request: Request) {
     query = query.ilike("description", `%${search}%`)
   }
 
-  const { data, error } = await query
+  const { data, error, count } = await query
 
   if (error) {
     console.error("Failed to fetch transactions:", error)
@@ -61,15 +66,56 @@ export async function GET(request: Request) {
     )
   }
 
+  // Get linked account names for transfers
+  const linkedTransactionIds = data
+    .filter((t) => t.is_transfer && t.linked_transaction_id)
+    .map((t) => t.linked_transaction_id)
+
+  let linkedAccountMap: Record<string, string> = {}
+  if (linkedTransactionIds.length > 0) {
+    const { data: linkedTx } = await supabaseAdmin
+      .from("transactions")
+      .select("id, account_id, accounts!inner(name)")
+      .in("id", linkedTransactionIds)
+      .eq("user_id", session.user.id)
+
+    if (linkedTx) {
+      linkedAccountMap = linkedTx.reduce((acc, t) => {
+        const accountData = t.accounts as unknown
+        const account = Array.isArray(accountData)
+          ? (accountData[0] as { name: string } | undefined)
+          : (accountData as { name: string } | null)
+        acc[t.id] = account?.name || "Unknown"
+        return acc
+      }, {} as Record<string, string>)
+    }
+  }
+
   // Transform data to flatten joined fields
   const transactions = data.map((t) => ({
     ...t,
     account_name: t.accounts?.name,
     category_name: t.categories?.name,
     category_type: t.categories?.type,
+    linked_account_name: t.linked_transaction_id
+      ? linkedAccountMap[t.linked_transaction_id]
+      : undefined,
     accounts: undefined,
     categories: undefined,
   }))
+
+  // Return paginated response when withCount is true
+  if (withCount) {
+    return NextResponse.json({
+      transactions,
+      pagination: {
+        total: count ?? 0,
+        limit,
+        offset,
+        hasMore: offset + limit < (count ?? 0),
+      },
+    })
+  }
 
   return NextResponse.json(transactions)
 }

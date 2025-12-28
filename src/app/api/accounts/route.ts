@@ -2,13 +2,19 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { supabaseAdmin } from "@/lib/supabase"
 import { accountSchema } from "@/lib/validators/account"
+import {
+  unauthorized,
+  validationError,
+  internalError,
+  handleApiError,
+} from "@/lib/errors"
 
 // GET /api/accounts - List all accounts for the current user with balances
 export async function GET() {
   try {
     const session = await auth()
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return unauthorized()
     }
 
     // Fetch accounts
@@ -20,7 +26,7 @@ export async function GET() {
 
     if (error) {
       console.error("Error fetching accounts:", error)
-      return NextResponse.json({ error: "Failed to fetch accounts" }, { status: 500 })
+      return internalError("Failed to fetch accounts")
     }
 
     // Calculate balance for each account from transactions
@@ -39,8 +45,7 @@ export async function GET() {
 
     return NextResponse.json(accountsWithBalances)
   } catch (error) {
-    console.error("Error in GET /api/accounts:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return handleApiError(error, "GET /api/accounts")
   }
 }
 
@@ -49,18 +54,15 @@ export async function POST(request: Request) {
   try {
     const session = await auth()
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return unauthorized()
     }
 
     const body = await request.json()
-    
+
     // Validate input with Zod
     const validationResult = accountSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json(
-        { error: "Validation failed", details: validationResult.error.flatten() },
-        { status: 400 }
-      )
+      return validationError(validationResult.error.flatten())
     }
 
     const { name, type } = validationResult.data
@@ -77,12 +79,11 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error("Error creating account:", error)
-      return NextResponse.json({ error: "Failed to create account" }, { status: 500 })
+      return internalError("Failed to create account")
     }
 
     return NextResponse.json(data, { status: 201 })
   } catch (error) {
-    console.error("Error in POST /api/accounts:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return handleApiError(error, "POST /api/accounts")
   }
 }

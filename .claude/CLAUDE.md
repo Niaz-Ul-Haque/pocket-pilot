@@ -210,6 +210,38 @@ export async function POST(req: Request) {
 
 ---
 
+## Feature Completion Workflow
+
+**CRITICAL: After implementing ANY feature, you MUST complete these steps before proceeding:**
+
+### Step 1: Build Check
+```bash
+npm run build
+```
+- Must complete without errors
+- Fix all TypeScript errors before proceeding
+- Do NOT skip this step
+
+### Step 2: Lint Check
+```bash
+npm run lint
+```
+- Must complete without errors
+- Fix all linting issues before proceeding
+- Warnings should be addressed if reasonable
+
+### Step 3: Documentation Update
+- Update relevant docs if behavior changed
+- Update `docs/PROGRESS.md` if milestone item completed
+- Update `next-tasks.md` to mark items complete
+
+### Step 4: Proceed to Next Task
+- Only move to the next task after build + lint pass
+- If build/lint fails, fix issues first
+- Never leave broken builds behind
+
+---
+
 ## Code Patterns
 
 ### Authentication (Server Components / API Routes)

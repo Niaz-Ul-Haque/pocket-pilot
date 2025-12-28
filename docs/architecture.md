@@ -293,6 +293,7 @@ CREATE INDEX idx_chat_messages_conversation ON public.chat_messages(conversation
 
 The AI assistant has access to these tools:
 
+**Core Tools:**
 | Tool | Purpose | Parameters |
 |------|---------|------------|
 | `get_spending` | Sum spending by category/period | category, period (this_month, last_month, etc.) |
@@ -304,6 +305,61 @@ The AI assistant has access to these tools:
 | `add_transfer` | Create transfer | from_account, to_account, amount, description |
 | `set_budget` | Create/update budget | category, amount, period |
 | `add_goal_contribution` | Add to goal | goal_name, amount |
+| `add_bill` | Create recurring bill | name, amount, frequency, due_date |
+| `add_recurring_transaction` | Create recurring transaction | description, amount, type, frequency |
+| `get_spending_trends` | Month-over-month analysis | None |
+| `get_forecast` | End-of-month projection | None |
+| `get_suggestions` | Personalized recommendations | None |
+
+**AI Enhancement Tools (v1.2):**
+| Tool | Purpose | Parameters |
+|------|---------|------------|
+| `smart_categorize` | Suggest categories for transactions | description (optional), get_uncategorized (boolean) |
+| `what_if_scenario` | Financial projections | scenario_type, category_name, amount/percentage, months |
+| `get_report` | Natural language financial report | period, start_date, end_date, include_categories, include_comparison |
+| `compare_periods` | Compare spending between periods | period1, period2, category_name (optional) |
+| `find_savings_opportunities` | Identify areas to save | None |
+| `get_bill_negotiation_tips` | Tips for reducing bills | None |
+| `check_unused_budgets` | Find underutilized budgets | None |
+| `track_financial_habits` | Score financial behaviors | period (this_month, last_month, last_3_months) |
+
+### AI Insights API (v1.2)
+
+A comprehensive analytics endpoint at `/api/ai-insights` providing:
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                    /api/ai-insights (GET)                         │
+├──────────────────────────────────────────────────────────────────┤
+│  Returns comprehensive AI-powered financial analytics:           │
+│                                                                   │
+│  ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐    │
+│  │ Health Score    │ │ Proactive       │ │ Predictive      │    │
+│  │ (0-100 + grade) │ │ Insights        │ │ Alerts          │    │
+│  └─────────────────┘ └─────────────────┘ └─────────────────┘    │
+│                                                                   │
+│  ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐    │
+│  │ Anomaly         │ │ Spending        │ │ Subscription    │    │
+│  │ Detection       │ │ Patterns        │ │ Audit           │    │
+│  └─────────────────┘ └─────────────────┘ └─────────────────┘    │
+│                                                                   │
+│  ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐    │
+│  │ Expense         │ │ Cash Flow       │ │ Goal            │    │
+│  │ Predictions     │ │ Forecast        │ │ Predictions     │    │
+│  └─────────────────┘ └─────────────────┘ └─────────────────┘    │
+│                                                                   │
+│  ┌─────────────────┐ ┌─────────────────┐                        │
+│  │ Bill Impact     │ │ Duplicate       │                        │
+│  │ Analysis        │ │ Detection       │                        │
+│  └─────────────────┘ └─────────────────┘                        │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+**Health Score Calculation:**
+- Budget Adherence: 25 points (based on % of budgets on track)
+- Savings Rate: 25 points (20%+ = full points)
+- Bill Payment: 25 points (on-time payment rate)
+- Goal Progress: 25 points (average progress across goals)
 
 ### Example Implementation
 

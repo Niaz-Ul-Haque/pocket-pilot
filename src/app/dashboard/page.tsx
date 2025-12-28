@@ -28,6 +28,7 @@ import {
   ChevronRight,
   Sparkles,
   Bell,
+  Repeat,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -50,6 +51,7 @@ import { type TransactionWithDetails, formatAmount, getAmountColorClass } from "
 import { type Category } from "@/lib/validators/category"
 import { cn } from "@/lib/utils"
 import { AIChatModal } from "@/components/ai-chat-modal"
+import { AIInsightsWidget } from "@/components/ai-insights-widget"
 
 // Get icon based on account type
 function getAccountIcon(type: string) {
@@ -80,7 +82,7 @@ function QuickActions({ onOpenAIChat }: { onOpenAIChat: () => void }) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
           <Button variant="outline" size="sm" className="h-auto py-3 flex-col gap-1" asChild>
             <Link href="/dashboard/transactions">
               <Plus className="h-4 w-4" />
@@ -88,9 +90,9 @@ function QuickActions({ onOpenAIChat }: { onOpenAIChat: () => void }) {
             </Link>
           </Button>
           <Button variant="outline" size="sm" className="h-auto py-3 flex-col gap-1" asChild>
-            <Link href="/dashboard/transactions">
-              <Upload className="h-4 w-4" />
-              <span className="text-xs">Import CSV</span>
+            <Link href="/dashboard/recurring">
+              <Repeat className="h-4 w-4" />
+              <span className="text-xs">Recurring</span>
             </Link>
           </Button>
           <Button variant="outline" size="sm" className="h-auto py-3 flex-col gap-1" asChild>
@@ -105,14 +107,20 @@ function QuickActions({ onOpenAIChat }: { onOpenAIChat: () => void }) {
               <span className="text-xs">New Goal</span>
             </Link>
           </Button>
-          <Button 
-            variant="default" 
-            size="sm" 
-            className="h-auto py-3 flex-col gap-1 bg-primary hover:bg-primary/90" 
+          <Button variant="outline" size="sm" className="h-auto py-3 flex-col gap-1" asChild>
+            <Link href="/dashboard/transactions">
+              <Upload className="h-4 w-4" />
+              <span className="text-xs">Import CSV</span>
+            </Link>
+          </Button>
+          <Button
+            variant="default"
+            size="sm"
+            className="h-auto py-3 flex-col gap-1 bg-primary hover:bg-primary/90"
             onClick={onOpenAIChat}
           >
             <Sparkles className="h-4 w-4" />
-            <span className="text-xs">Talk to AI Advisor</span>
+            <span className="text-xs">AI Advisor</span>
           </Button>
         </div>
       </CardContent>
@@ -387,6 +395,9 @@ export default function DashboardPage() {
 
       {/* Quick Actions */}
       <QuickActions onOpenAIChat={() => setIsAIChatOpen(true)} />
+
+      {/* AI Insights Widget */}
+      <AIInsightsWidget />
 
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-3">

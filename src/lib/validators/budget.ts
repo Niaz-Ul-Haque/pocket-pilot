@@ -11,18 +11,21 @@ export const budgetSchema = z.object({
     .number({ message: "Budget amount is required" })
     .positive("Budget must be greater than 0")
     .multipleOf(0.01, "Amount can only have up to 2 decimal places"),
+  rollover: z.boolean().default(false),
 })
 
-// Schema for updating a budget (only amount can be updated)
+// Schema for updating a budget
 export const budgetUpdateSchema = z.object({
   amount: z
     .number({ message: "Budget amount is required" })
     .positive("Budget must be greater than 0")
     .multipleOf(0.01, "Amount can only have up to 2 decimal places"),
+  rollover: z.boolean().optional(),
 })
 
 // Type inferred from create schema (form data)
-export type BudgetFormData = z.infer<typeof budgetSchema>
+// Use z.input for form data since we want the pre-default type
+export type BudgetFormData = z.input<typeof budgetSchema>
 
 // Full budget type including database fields
 export type Budget = {
@@ -42,6 +45,8 @@ export type BudgetWithDetails = Budget & {
   spent: number
   remaining: number
   percentage: number
+  rollover_amount?: number // Amount carried over from previous month
+  effective_budget?: number // Budget + rollover
 }
 
 // Get budget status based on percentage
@@ -92,15 +97,23 @@ export function formatCurrency(amount: number): string {
 // Calculate budget details from raw data
 export function calculateBudgetDetails(
   budget: Budget & { category_name: string; category_type: string },
-  spent: number
+  spent: number,
+  rolloverAmount?: number
 ): BudgetWithDetails {
-  const remaining = budget.amount - spent
-  const percentage = budget.amount > 0 ? (spent / budget.amount) * 100 : 0
+  // If rollover is enabled and there's a rollover amount, add it to effective budget
+  const effectiveBudget = budget.rollover && rolloverAmount
+    ? budget.amount + rolloverAmount
+    : budget.amount
+
+  const remaining = effectiveBudget - spent
+  const percentage = effectiveBudget > 0 ? (spent / effectiveBudget) * 100 : 0
 
   return {
     ...budget,
     spent,
     remaining,
     percentage: Math.round(percentage * 10) / 10, // Round to 1 decimal
+    rollover_amount: budget.rollover ? rolloverAmount : undefined,
+    effective_budget: budget.rollover && rolloverAmount ? effectiveBudget : undefined,
   }
 }

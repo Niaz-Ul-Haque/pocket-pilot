@@ -116,9 +116,16 @@ export async function PUT(request: Request, { params }: RouteParams) {
     return NextResponse.json({ error: "Budget not found" }, { status: 404 })
   }
 
+  const updateData: { amount: number; rollover?: boolean } = {
+    amount: validationResult.data.amount,
+  }
+  if (validationResult.data.rollover !== undefined) {
+    updateData.rollover = validationResult.data.rollover
+  }
+
   const { data, error } = await supabaseAdmin
     .from("budgets")
-    .update({ amount: validationResult.data.amount })
+    .update(updateData)
     .eq("id", id)
     .eq("user_id", session.user.id)
     .select(`

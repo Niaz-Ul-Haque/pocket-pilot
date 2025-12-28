@@ -15,7 +15,14 @@ import {
   ChevronLeft,
   Bot,
   User,
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
+  Square,
+  Settings2,
 } from "lucide-react"
+import { useSpeechRecognition, useSpeechSynthesis } from "@/hooks"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -36,6 +43,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { useChat } from "@ai-sdk/react"
@@ -75,19 +95,68 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  
+
+  // Voice input/output state
+  const [voiceOutputEnabled, setVoiceOutputEnabled] = useState(false)
+  const [autoSpeak, setAutoSpeak] = useState(false)
+
+  // Speech recognition hook
+  const {
+    isListening,
+    isSupported: isSpeechRecognitionSupported,
+    transcript,
+    error: speechError,
+    startListening,
+    stopListening,
+    resetTranscript,
+  } = useSpeechRecognition({
+    onResult: (result) => {
+      if (inputRef.current) {
+        inputRef.current.value = result
+      }
+    },
+  })
+
+  // Speech synthesis hook
+  const {
+    speak,
+    cancel: cancelSpeech,
+    isSpeaking,
+    isSupported: isSpeechSynthesisSupported,
+  } = useSpeechSynthesis({
+    rate: 1,
+    pitch: 1,
+  })
+
   // Use refs to track current values for the onFinish callback
   const currentConversationIdRef = useRef<string | null>(null)
   const isNewConversationRef = useRef(false)
-  
+  const autoSpeakRef = useRef(false)
+  const speakRef = useRef<(text: string) => void>(() => {})
+
   // Keep refs in sync with state
   useEffect(() => {
     currentConversationIdRef.current = currentConversationId
   }, [currentConversationId])
-  
+
   useEffect(() => {
     isNewConversationRef.current = isNewConversation
   }, [isNewConversation])
+
+  useEffect(() => {
+    autoSpeakRef.current = autoSpeak
+  }, [autoSpeak])
+
+  useEffect(() => {
+    speakRef.current = speak
+  }, [speak])
+
+  // Update input field with transcript while listening
+  useEffect(() => {
+    if (isListening && transcript && inputRef.current) {
+      inputRef.current.value = transcript
+    }
+  }, [isListening, transcript])
   
   // User info from session
   const userImage = session?.user?.image || null
@@ -108,17 +177,22 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
           ?.filter((p) => p.type === "text")
           .map((p) => (p as { type: "text"; text: string }).text)
           .join("") || ""
-        
+
         // Only save if there's actual content
         if (content.trim()) {
           if (saveMessageToDbRef.current) {
             await saveMessageToDbRef.current(convId, "assistant", content)
           }
-          
+
           // Update conversation title if it's the first exchange
           if (isNewConversationRef.current) {
             await updateConversationTitleRef.current?.(convId, content)
             setIsNewConversation(false)
+          }
+
+          // Auto-speak the response if enabled
+          if (autoSpeakRef.current && speakRef.current) {
+            speakRef.current(content)
           }
         }
       }
@@ -268,11 +342,39 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
     }
   }
 
+  // Handle voice input toggle
+  const handleVoiceToggle = useCallback(() => {
+    if (isListening) {
+      stopListening()
+    } else {
+      resetTranscript()
+      startListening()
+    }
+  }, [isListening, startListening, stopListening, resetTranscript])
+
+  // Handle speak message
+  const handleSpeakMessage = useCallback(
+    (content: string) => {
+      if (isSpeaking) {
+        cancelSpeech()
+      } else {
+        speak(content)
+      }
+    },
+    [isSpeaking, cancelSpeech, speak]
+  )
+
   // Handle send message
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault()
     const input = inputRef.current?.value.trim()
     if (!input || isChatLoading) return
+
+    // Stop listening if active
+    if (isListening) {
+      stopListening()
+    }
+    resetTranscript()
 
     let conversationId = currentConversationId
 
@@ -333,15 +435,15 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-5xl h-[80vh] p-0 gap-0" hideCloseButton>
-          <div className="flex h-full">
+          <div className="flex h-full overflow-hidden">
             {/* History Sidebar */}
             <div
               className={cn(
-                "border-r bg-muted/30 flex flex-col transition-all duration-300",
-                showHistory ? "w-72" : "w-0 overflow-hidden"
+                "border-r bg-muted/30 flex flex-col transition-all duration-300 overflow-hidden",
+                showHistory ? "w-72 min-h-0" : "w-0"
               )}
             >
-              <div className="p-4 border-b flex items-center justify-between">
+              <div className="p-4 border-b flex items-center justify-between shrink-0">
                 <h3 className="font-semibold flex items-center gap-2">
                   <History className="h-4 w-4" />
                   Chat History
@@ -356,7 +458,7 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
                 </Button>
               </div>
               
-              <ScrollArea className="flex-1">
+              <ScrollArea className="flex-1 min-h-0">
                 <div className="p-2 space-y-1">
                   {conversations.length === 0 ? (
                     <p className="text-xs text-muted-foreground text-center py-4">
@@ -384,7 +486,7 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={(e) => {
                             e.stopPropagation()
                             setDeleteConversationId(conv.id)
@@ -400,8 +502,8 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
             </div>
 
             {/* Chat Area */}
-            <div className="flex-1 flex flex-col min-w-0">
-              <DialogHeader className="p-4 border-b">
+            <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
+              <DialogHeader className="p-4 border-b shrink-0">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Button
@@ -426,6 +528,56 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
                     </DialogTitle>
                   </div>
                   <div className="flex items-center gap-2">
+                    {/* Voice Settings */}
+                    {(isSpeechRecognitionSupported || isSpeechSynthesisSupported) && (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Settings2 className="h-4 w-4" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-64" align="end">
+                          <div className="space-y-4">
+                            <h4 className="font-medium text-sm">Voice Settings</h4>
+                            {isSpeechSynthesisSupported && (
+                              <>
+                                <div className="flex items-center justify-between">
+                                  <Label htmlFor="voice-output" className="text-sm">
+                                    Enable voice output
+                                  </Label>
+                                  <Switch
+                                    id="voice-output"
+                                    checked={voiceOutputEnabled}
+                                    onCheckedChange={setVoiceOutputEnabled}
+                                  />
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <Label htmlFor="auto-speak" className="text-sm">
+                                    Auto-speak responses
+                                  </Label>
+                                  <Switch
+                                    id="auto-speak"
+                                    checked={autoSpeak}
+                                    onCheckedChange={setAutoSpeak}
+                                    disabled={!voiceOutputEnabled}
+                                  />
+                                </div>
+                              </>
+                            )}
+                            {!isSpeechRecognitionSupported && (
+                              <p className="text-xs text-muted-foreground">
+                                Voice input not supported in this browser.
+                              </p>
+                            )}
+                            {!isSpeechSynthesisSupported && (
+                              <p className="text-xs text-muted-foreground">
+                                Voice output not supported in this browser.
+                              </p>
+                            )}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    )}
                     {currentConversationId && (
                       <Button variant="outline" size="sm" onClick={startNewConversation}>
                         <Plus className="h-4 w-4 mr-1" />
@@ -443,7 +595,7 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
               </DialogHeader>
 
               {/* Messages */}
-              <ScrollArea className="flex-1 p-4">
+              <ScrollArea className="flex-1 min-h-0 p-4">
                 {isLoadingHistory ? (
                   <div className="flex items-center justify-center h-full">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -486,7 +638,7 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
                       <div
                         key={msg.id}
                         className={cn(
-                          "flex gap-3",
+                          "flex gap-3 group",
                           msg.role === "user" ? "justify-end" : "justify-start"
                         )}
                       >
@@ -497,13 +649,37 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
                         )}
                         <div
                           className={cn(
-                            "max-w-[80%] p-3 rounded-lg",
+                            "max-w-[80%] p-3 rounded-lg relative",
                             msg.role === "user"
                               ? "bg-primary text-primary-foreground"
                               : "bg-muted"
                           )}
                         >
                           <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                          {/* Speak button for assistant messages */}
+                          {msg.role !== "user" && voiceOutputEnabled && isSpeechSynthesisSupported && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute -bottom-3 -right-3 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity bg-background shadow-sm border"
+                                    onClick={() => handleSpeakMessage(msg.content)}
+                                  >
+                                    {isSpeaking ? (
+                                      <Square className="h-3 w-3" />
+                                    ) : (
+                                      <Volume2 className="h-3 w-3" />
+                                    )}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {isSpeaking ? "Stop speaking" : "Read aloud"}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
                         </div>
                         {msg.role === "user" && (
                           <Avatar className="h-8 w-8 shrink-0">
@@ -534,14 +710,55 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
               </ScrollArea>
 
               {/* Input */}
-              <div className="p-4 border-t">
+              <div className="p-4 border-t shrink-0">
+                {/* Voice input error message */}
+                {speechError && (
+                  <div className="mb-2 p-2 text-xs text-destructive bg-destructive/10 rounded-md">
+                    {speechError}
+                  </div>
+                )}
+                {/* Listening indicator */}
+                {isListening && (
+                  <div className="mb-2 flex items-center gap-2 text-xs text-primary">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+                    </span>
+                    Listening... {transcript && `"${transcript}"`}
+                  </div>
+                )}
                 <form onSubmit={handleSend} className="flex gap-2">
                   <Input
                     ref={inputRef}
-                    placeholder="Ask about your finances or add a transaction..."
-                    className="flex-1"
+                    placeholder={isListening ? "Listening..." : "Ask about your finances or add a transaction..."}
+                    className={cn("flex-1", isListening && "border-primary")}
                     disabled={isChatLoading}
                   />
+                  {/* Microphone button */}
+                  {isSpeechRecognitionSupported && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            type="button"
+                            variant={isListening ? "destructive" : "outline"}
+                            size="icon"
+                            onClick={handleVoiceToggle}
+                            disabled={isChatLoading}
+                          >
+                            {isListening ? (
+                              <MicOff className="h-4 w-4" />
+                            ) : (
+                              <Mic className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {isListening ? "Stop listening" : "Voice input"}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
                   <Button type="submit" disabled={isChatLoading}>
                     {isChatLoading ? (
                       <Loader2 className="h-4 w-4 animate-spin" />

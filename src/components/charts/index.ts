@@ -13,6 +13,7 @@ export { CategoryTrendsChart } from "./category-trends-chart"
 export { BudgetGaugeChart } from "./budget-gauge-chart"
 export { BudgetComparisonChart } from "./budget-comparison-chart"
 export { BudgetHeatmap } from "./budget-heatmap"
+export { BudgetVsActualReport } from "./budget-vs-actual-report"
 
 // Goal Charts
 export { GoalTimelineChart } from "./goal-timeline-chart"

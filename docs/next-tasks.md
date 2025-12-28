@@ -348,16 +348,48 @@ This ensures production deployments are intentional and only happen after explic
 
 ## TIER 5: Budgeting Enhancements (8 Features)
 
+**Status: 8/8 Complete**
+
 | Feature | Description | Status |
 |---------|-------------|--------|
-| Budget Templates | Pre-built configurations (50/30/20, envelope method, zero-based) | Pending |
-| Apply Template | One-click apply a budget template | Pending |
-| Annual Budgets | Set yearly budgets alongside monthly | Pending |
-| Budget vs Actual Report | Historical comparison of budgeted vs spent | Pending |
-| Budget Copy Forward | Clone last month's budgets with one click | Pending |
-| Flexible Budget Periods | Weekly or bi-weekly budgets option | Pending |
-| Budget Notes | Add notes/reminders to budget categories | Pending |
-| Budget Alerts Customization | Custom threshold percentages for alerts | Pending |
+| Budget Templates | Pre-built configurations (50/30/20, envelope method, zero-based) | ✅ Complete |
+| Apply Template | One-click apply a budget template | ✅ Complete |
+| Annual Budgets | Set yearly budgets alongside monthly | ✅ Complete |
+| Budget vs Actual Report | Historical comparison of budgeted vs spent | ✅ Complete |
+| Budget Copy Forward | Clone last month's budgets with one click | ✅ Complete |
+| Flexible Budget Periods | Weekly or bi-weekly budgets option | ✅ Complete |
+| Budget Notes | Add notes/reminders to budget categories | ✅ Complete |
+| Budget Alerts Customization | Custom threshold percentages for alerts | ✅ Complete |
+
+### Implementation Details
+
+**Database Migration: `014_tier5_budget_features.sql`**
+- Added `notes`, `alert_threshold`, `year`, `month` columns to budgets table
+- `budget_templates` table for system and custom templates
+- `budget_template_items` table for template allocations
+- Pre-seeded 3 system templates: 50/30/20 Rule, Envelope Method, Zero-Based Budget
+- RLS policies for all new tables
+
+**New Validators in `src/lib/validators/`:**
+- `budget-template.ts` - Template schemas, types, and utility functions
+- Updated `budget.ts` - Added BUDGET_PERIODS (MONTHLY, WEEKLY, BIWEEKLY, YEARLY), alert thresholds, budget report types
+
+**New API Endpoints:**
+- `GET|POST /api/budget-templates` - List/create templates
+- `GET|PUT|DELETE /api/budget-templates/[id]` - Template CRUD
+- `POST /api/budget-templates/[id]/apply` - Apply template to create budgets
+- `POST /api/budgets/copy-forward` - Copy budgets from one month to another
+- `GET /api/budgets/report` - Budget vs actual report with date ranges
+
+**New Components:**
+- `BudgetVsActualReport` - Interactive report with charts, date range selection, CSV export
+- Updated `BudgetForm` - Now includes period, notes, and alert threshold fields
+
+**New Pages:**
+- `/dashboard/budgets/templates` - Browse and apply budget templates
+
+**Updated Pages:**
+- `/dashboard/budgets` - Added tabs (Budgets, Analytics, Report), Actions menu (Templates, Copy Forward), notes display, period badges, custom alert threshold badges
 
 ---
 

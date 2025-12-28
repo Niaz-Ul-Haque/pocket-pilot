@@ -66,6 +66,11 @@ import {
   getBillStatusLabel,
 } from "@/lib/validators/bill"
 import { cn } from "@/lib/utils"
+import {
+  BillCalendar,
+  MonthlyBillsChart,
+  BillTimeline,
+} from "@/components/charts"
 
 export default function BillsPage() {
   const [bills, setBills] = useState<BillWithStatus[]>([])
@@ -415,6 +420,18 @@ export default function BillsPage() {
               </CardContent>
             </Card>
           )}
+        </div>
+      )}
+
+      {/* Bill Visualizations */}
+      {bills.length > 0 && (
+        <div className="mt-8 space-y-6">
+          <h2 className="text-xl font-semibold">Bill Analytics</h2>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <MonthlyBillsChart />
+            <BillTimeline days={30} />
+          </div>
+          <BillCalendar />
         </div>
       )}
 

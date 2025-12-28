@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import {
@@ -20,14 +20,13 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  Split,
+  Link2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card"
 import {
   Dialog,
@@ -51,6 +50,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import {
   Table,
@@ -70,10 +70,13 @@ import {
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Checkbox } from "@/components/ui/checkbox"
 import { TransactionForm } from "@/components/forms/transaction-form"
 import { TransferForm } from "@/components/forms/transfer-form"
 import { CsvImportForm } from "@/components/forms/csv-import-form"
-import { TagManagerModal } from "@/components/tag-manager-modal"
+import { BulkActionsToolbar } from "@/components/bulk-actions-toolbar"
+import { SplitTransactionDialog } from "@/components/split-transaction-dialog"
+import { TransactionLinkDialog } from "@/components/transaction-link-dialog"
 import {
   type TransactionWithDetails,
   formatAmount,
@@ -106,7 +109,17 @@ export default function TransactionsPage() {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
   const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
-  const [isTagManagerOpen, setIsTagManagerOpen] = useState(false)
+
+  // Split and link dialogs
+  const [splittingTransaction, setSplittingTransaction] = useState<
+    TransactionWithTags | undefined
+  >()
+  const [linkingTransaction, setLinkingTransaction] = useState<
+    TransactionWithTags | undefined
+  >()
+
+  // Multi-select state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   // Filters
   const [searchTerm, setSearchTerm] = useState("")
@@ -326,6 +339,36 @@ export default function TransactionsPage() {
     return <ArrowUpCircle className="h-4 w-4 text-green-500" />
   }
 
+  // Multi-select handlers
+  const toggleSelectAll = useCallback(() => {
+    if (selectedIds.size === filteredTransactions.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filteredTransactions.map((t) => t.id)))
+    }
+  }, [filteredTransactions, selectedIds.size])
+
+  const toggleSelectOne = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }, [])
+
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set())
+  }, [])
+
+  // Clear selection when filters or page changes
+  useEffect(() => {
+    setSelectedIds(new Set())
+  }, [page, debouncedSearch, filterAccount, filterCategory, filterTag])
+
   if (isLoading) {
     return (
       <div className="flex flex-1 flex-col">
@@ -476,6 +519,18 @@ export default function TransactionsPage() {
           </Select>
         </div>
 
+        {/* Bulk Actions Toolbar */}
+        {selectedIds.size > 0 && (
+          <BulkActionsToolbar
+            selectedCount={selectedIds.size}
+            selectedIds={Array.from(selectedIds)}
+            categories={categories}
+            tags={tags}
+            onClearSelection={clearSelection}
+            onBulkComplete={fetchData}
+          />
+        )}
+
         {/* Transactions List */}
         {filteredTransactions.length === 0 ? (
           <Card>
@@ -501,6 +556,16 @@ export default function TransactionsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-[40px]">
+                      <Checkbox
+                        checked={
+                          filteredTransactions.length > 0 &&
+                          selectedIds.size === filteredTransactions.length
+                        }
+                        onCheckedChange={toggleSelectAll}
+                        aria-label="Select all"
+                      />
+                    </TableHead>
                     <TableHead className="w-[100px]">Date</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead>Category</TableHead>
@@ -512,7 +577,17 @@ export default function TransactionsPage() {
                 </TableHeader>
                 <TableBody>
                   {filteredTransactions.map((transaction) => (
-                    <TableRow key={transaction.id}>
+                    <TableRow
+                      key={transaction.id}
+                      className={selectedIds.has(transaction.id) ? "bg-muted/50" : undefined}
+                    >
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.has(transaction.id)}
+                          onCheckedChange={() => toggleSelectOne(transaction.id)}
+                          aria-label={`Select transaction ${transaction.description || transaction.id}`}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">
                         {format(new Date(transaction.date + "T00:00:00"), "MMM d")}
                       </TableCell>
@@ -608,6 +683,24 @@ export default function TransactionsPage() {
                               <Pencil className="mr-2 h-4 w-4" />
                               Edit
                             </DropdownMenuItem>
+                            {!transaction.is_transfer && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => setSplittingTransaction(transaction)}
+                                >
+                                  <Split className="mr-2 h-4 w-4" />
+                                  Split
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => setLinkingTransaction(transaction)}
+                                >
+                                  <Link2 className="mr-2 h-4 w-4" />
+                                  Link to Another
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="text-destructive"
                               onClick={() => setDeletingTransaction(transaction)}
@@ -778,6 +871,29 @@ export default function TransactionsPage() {
             />
           </DialogContent>
         </Dialog>
+
+        {/* Split Transaction Dialog */}
+        <SplitTransactionDialog
+          isOpen={!!splittingTransaction}
+          onOpenChange={(open) => !open && setSplittingTransaction(undefined)}
+          transaction={splittingTransaction || null}
+          categories={categories}
+          onSuccess={() => {
+            setSplittingTransaction(undefined)
+            fetchData()
+          }}
+        />
+
+        {/* Link Transaction Dialog */}
+        <TransactionLinkDialog
+          isOpen={!!linkingTransaction}
+          onOpenChange={(open) => !open && setLinkingTransaction(undefined)}
+          sourceTransaction={linkingTransaction || null}
+          onSuccess={() => {
+            setLinkingTransaction(undefined)
+            fetchData()
+          }}
+        />
       </div>
     </div>
   )

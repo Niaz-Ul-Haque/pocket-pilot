@@ -52,6 +52,13 @@ import { type Category } from "@/lib/validators/category"
 import { cn } from "@/lib/utils"
 import { AIChatModal } from "@/components/ai-chat-modal"
 import { AIInsightsWidget } from "@/components/ai-insights-widget"
+import {
+  SpendingTrendChart,
+  CategoryBreakdownChart,
+  IncomeVsExpenseChart,
+  CashFlowWaterfall,
+  DailySpendingSparklineCard,
+} from "@/components/charts"
 
 // Get icon based on account type
 function getAccountIcon(type: string) {
@@ -398,6 +405,17 @@ export default function DashboardPage() {
 
       {/* AI Insights Widget */}
       <AIInsightsWidget />
+
+      {/* Data Visualization Charts */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <SpendingTrendChart months={6} />
+        <CategoryBreakdownChart />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <IncomeVsExpenseChart months={6} />
+        <CashFlowWaterfall />
+      </div>
 
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-3">

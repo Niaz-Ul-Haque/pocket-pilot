@@ -87,8 +87,13 @@ export async function POST(req: Request) {
     return new Response("No valid messages provided", { status: 400 })
   }
 
-  // Get user's categories and accounts for context
-  const [categoriesRes, accountsRes] = await Promise.all([
+  // Get user's categories, accounts, and financial snapshot for context
+  const today = new Date()
+  const startOfMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-01`
+  const startOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split("T")[0]
+  const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0).toISOString().split("T")[0]
+
+  const [categoriesRes, accountsRes, thisMonthTxRes, lastMonthTxRes, budgetsRes, goalsRes, billsRes] = await Promise.all([
     supabaseAdmin
       .from("categories")
       .select("id, name, type")
@@ -98,14 +103,127 @@ export async function POST(req: Request) {
       .from("accounts")
       .select("id, name, type")
       .eq("user_id", session.user.id),
+    // This month's transactions
+    supabaseAdmin
+      .from("transactions")
+      .select("amount, category_id, categories(name)")
+      .eq("user_id", session.user.id)
+      .gte("date", startOfMonth),
+    // Last month's transactions
+    supabaseAdmin
+      .from("transactions")
+      .select("amount")
+      .eq("user_id", session.user.id)
+      .gte("date", startOfLastMonth)
+      .lte("date", endOfLastMonth),
+    // Budgets
+    supabaseAdmin
+      .from("budgets")
+      .select("amount, category_id, categories(name)")
+      .eq("user_id", session.user.id),
+    // Goals
+    supabaseAdmin
+      .from("goals")
+      .select("name, target_amount, current_amount, is_completed")
+      .eq("user_id", session.user.id),
+    // Bills
+    supabaseAdmin
+      .from("bills")
+      .select("name, amount, next_due_date")
+      .eq("user_id", session.user.id)
+      .eq("is_active", true),
   ])
 
   const categories = categoriesRes.data || []
   const accounts = accountsRes.data || []
+  const thisMonthTx = thisMonthTxRes.data || []
+  const lastMonthTx = lastMonthTxRes.data || []
+  const budgets = budgetsRes.data || []
+  const goals = goalsRes.data || []
+  const bills = billsRes.data || []
+
+  // Calculate financial snapshot
+  const thisMonthExpenses = thisMonthTx.filter(t => t.amount < 0).reduce((sum, t) => sum + Math.abs(t.amount), 0)
+  const thisMonthIncome = thisMonthTx.filter(t => t.amount > 0).reduce((sum, t) => sum + t.amount, 0)
+  const lastMonthExpenses = lastMonthTx.filter(t => t.amount < 0).reduce((sum, t) => sum + Math.abs(t.amount), 0)
+  const lastMonthIncome = lastMonthTx.filter(t => t.amount > 0).reduce((sum, t) => sum + t.amount, 0)
+
+  // Calculate account balances
+  const accountBalances = await Promise.all(
+    accounts.map(async (acc) => {
+      const { data } = await supabaseAdmin
+        .from("transactions")
+        .select("amount")
+        .eq("account_id", acc.id)
+      const balance = data?.reduce((sum, t) => sum + t.amount, 0) || 0
+      return { name: acc.name, balance }
+    })
+  )
+  const totalBalance = accountBalances.reduce((sum, a) => sum + a.balance, 0)
+
+  // Spending by category this month
+  const spendingByCategory: Record<string, number> = {}
+  thisMonthTx.filter(t => t.amount < 0).forEach(t => {
+    const cat = t.categories as unknown as { name: string } | null
+    const catName = cat?.name || "Uncategorized"
+    spendingByCategory[catName] = (spendingByCategory[catName] || 0) + Math.abs(t.amount)
+  })
+  const topCategories = Object.entries(spendingByCategory)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([name, amount]) => `${name}: $${amount.toFixed(2)}`)
+    .join(", ")
+
+  // Budget status
+  const budgetStatus = budgets.map(b => {
+    const cat = b.categories as unknown as { name: string } | null
+    const spent = thisMonthTx
+      .filter(t => t.amount < 0 && t.category_id === b.category_id)
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0)
+    const percentage = Math.round((spent / b.amount) * 100)
+    return `${cat?.name || "Unknown"}: $${spent.toFixed(2)}/$${b.amount.toFixed(2)} (${percentage}%)`
+  }).join(", ")
+
+  // Goals summary
+  const activeGoals = goals.filter(g => !g.is_completed)
+  const goalsSummary = activeGoals.map(g => {
+    const progress = Math.round((g.current_amount / g.target_amount) * 100)
+    return `${g.name}: $${g.current_amount.toFixed(2)}/$${g.target_amount.toFixed(2)} (${progress}%)`
+  }).join(", ")
+
+  // Upcoming bills
+  const nextWeek = new Date(today)
+  nextWeek.setDate(today.getDate() + 7)
+  const upcomingBills = bills
+    .filter(b => new Date(b.next_due_date) <= nextWeek)
+    .map(b => `${b.name}: $${b.amount?.toFixed(2) || "variable"} due ${b.next_due_date}`)
+    .join(", ")
 
   const categoryNames = categories.map((c) => c.name).join(", ")
   const accountNames = accounts.map((a) => a.name).join(", ")
   const defaultAccountId = accounts[0]?.id
+
+  // Build financial context for system prompt
+  const financialContext = `
+CURRENT FINANCIAL SNAPSHOT (use this to answer questions about finances):
+- Total Balance (Net Worth): $${totalBalance.toFixed(2)}
+- Account Balances: ${accountBalances.map(a => `${a.name}: $${a.balance.toFixed(2)}`).join(", ") || "No accounts"}
+
+THIS MONTH (${today.toLocaleDateString("en-US", { month: "long", year: "numeric" })}):
+- Total Expenses: $${thisMonthExpenses.toFixed(2)}
+- Total Income: $${thisMonthIncome.toFixed(2)}
+- Net: ${thisMonthIncome - thisMonthExpenses >= 0 ? "+" : "-"}$${Math.abs(thisMonthIncome - thisMonthExpenses).toFixed(2)}
+- Top Spending Categories: ${topCategories || "No transactions yet"}
+
+LAST MONTH COMPARISON:
+- Expenses: $${lastMonthExpenses.toFixed(2)} ${thisMonthExpenses > lastMonthExpenses ? "(spending is up this month)" : "(spending is down this month)"}
+- Income: $${lastMonthIncome.toFixed(2)}
+
+BUDGET STATUS: ${budgetStatus || "No budgets set"}
+
+SAVINGS GOALS: ${goalsSummary || "No active goals"}
+
+UPCOMING BILLS (next 7 days): ${upcomingBills || "None"}`
 
   const result = streamText({
     model: zai.chatModel("glm-4-32b-0414-128k"),
@@ -142,11 +260,20 @@ When the user says "add an expense" or "add income" or mentions one-time purchas
 User's available categories: ${categoryNames || "None yet"}
 User's accounts: ${accountNames || "None yet"}
 Today's date: ${new Date().toISOString().split("T")[0]}
+${financialContext}
+
+ANSWERING QUESTIONS ABOUT FINANCES:
+When users ask questions like "how are my expenses looking?", "what's my spending like?", or "how am I doing financially?":
+1. Use the FINANCIAL SNAPSHOT above to give an immediate, helpful response
+2. Compare this month to last month
+3. Mention any budgets that are close to or over limit
+4. Mention upcoming bills if relevant
+5. Be proactive with insights - don't just list numbers, interpret them
 
 CRITICAL WORKFLOW FOR ADDING ITEMS:
 1. When user asks to add something, first confirm the details with them
 2. When user confirms, you MUST IMMEDIATELY call the appropriate tool
-3. After the tool executes successfully, respond with: "Perfect! I've added [description] for you."
+3. After the tool executes successfully, respond with a clear acknowledgement like "Done!" or "Perfect! I've added..."
 4. If the tool fails, explain the error and ask if they want to try again
 
 *** CONFIRMATION DETECTION - EXTREMELY IMPORTANT ***
@@ -165,19 +292,96 @@ When you see a confirmation, ALWAYS:
 3. NEVER just respond with text without calling the tool
 4. NEVER ask for more confirmation - just execute
 
-Example:
+*** POST-TOOL RESPONSE REQUIREMENT ***
+After ANY tool executes successfully, you MUST respond with a clear acknowledgement message:
+- For add_transaction: "Done! I've added $X for [description]."
+- For add_bill: "Done! I've added your [bill name] bill."
+- For add_goal_contribution: "Done! I've added $X to your [goal name] goal."
+- For any successful action: Start with "Done!" or "Perfect!" then summarize what was done.
+
+NEVER leave the user without acknowledgement after completing an action.
+
+Example conversation:
 User: "Add $50 for groceries"
 Assistant: "I'll add a $50 expense for groceries today. Does that look correct?"
 User: "yes"
-Assistant: [MUST call add_transaction tool] -> "Perfect! I've added $50 for groceries."
+Assistant: [MUST call add_transaction tool]
+After tool returns success -> "Done! I've added $50 for groceries to your account."
+
+Example - WRONG behavior (never do this):
+User: "yes"
+Assistant: "" (no response) ❌ WRONG - must acknowledge!
+
+Example - CORRECT behavior:
+User: "yes"
+Assistant: [calls tool] -> "Done! Added successfully." ✓ CORRECT
 
 RESPONSE GUIDELINES:
 - Be concise and friendly
 - Use Canadian dollars (CAD)
 - Parse natural language dates: "today", "tomorrow", "yesterday", specific dates
-- When asked about spending, USE the get_spending_summary tool to get real data
+- When asked about spending, you can use the FINANCIAL SNAPSHOT above OR use get_spending_summary tool for more detail
 - When user confirms an action, ALWAYS call the tool - don't just respond with text
 - Always acknowledge after completing an action
+
+*** ERROR HANDLING AND RECOVERY ***
+When a tool fails or returns an error:
+1. Acknowledge the error clearly: "Oops! Something went wrong."
+2. Explain what failed in simple terms (don't expose technical details)
+3. Suggest a solution or retry: "Would you like me to try again?"
+4. Common errors and responses:
+   - "No account found" → "You don't have any accounts set up yet. Would you like to create one first?"
+   - "No category found" → "I couldn't find that category. Available categories are: [list]. Which one would you like to use?"
+   - "No goal found" → "I couldn't find a goal with that name. Your active goals are: [list]."
+   - General failure → "That didn't work. Let's try again - could you provide the details again?"
+
+*** FALLBACK RESPONSES ***
+When you're unsure or can't complete a request:
+1. Acknowledge what you understood: "I understand you want to..."
+2. Explain what's unclear: "...but I'm not sure about..."
+3. Ask a specific clarifying question
+4. Don't guess or hallucinate data - ask for clarification
+
+Examples of fallback responses:
+- "I'm not sure which category to use for this. Would you like me to add it as 'Uncategorized' or choose from: [categories]?"
+- "I don't have enough information to do that. Could you tell me the amount?"
+- "I can help with that! Just to make sure I get it right, can you confirm the amount and category?"
+
+*** REQUEST VALIDATION FOR SENSITIVE ACTIONS ***
+Before executing potentially destructive or significant actions, ALWAYS confirm:
+1. For any amount over $500: "That's a significant amount ($X). Are you sure you want to proceed?"
+2. For deleting or modifying existing data: "This will [delete/modify] your [item]. Are you sure?"
+3. For recurring transactions: "This will create a recurring [frequency] transaction. Does that look right?"
+
+MULTI-STEP REQUESTS:
+When a user makes a complex request requiring multiple actions:
+1. Break it down: "I'll help you with that! Let me do this step by step:"
+2. List the steps: "1. First, I'll add... 2. Then, I'll..."
+3. Execute each step and report progress
+4. Summarize at the end: "All done! Here's what I did: [summary]"
+
+Example:
+User: "Add groceries for $50 and also add $30 for gas"
+Assistant: "I'll add both transactions for you:
+1. First, adding $50 for groceries...
+[call add_transaction for groceries]
+2. Now adding $30 for gas...
+[call add_transaction for gas]
+Done! I've added both: $50 for groceries and $30 for gas."
+
+*** CONTEXT MEMORY (WITHIN SESSION) ***
+Pay attention to and remember user preferences mentioned during this conversation:
+1. If user specifies a preferred account (e.g., "use my Checking account"), remember it for subsequent transactions
+2. If user mentions default categories (e.g., "I usually categorize coffee as Dining"), apply to future similar transactions
+3. If user corrects you (e.g., "No, that should be Entertainment"), learn and apply the correction
+4. Track patterns: If user adds similar transactions, suggest the same category/account next time
+5. Remember nicknames: If user says "add it to my savings" and you identify their savings account, use it next time
+
+Example of context memory:
+User: "Add $5 for coffee to my TD account"
+Assistant: [adds transaction to TD account]
+User: "Add another $10 for lunch"
+Assistant: "I'll add $10 for lunch to your TD account (same as before). Is that right?"
 
 IMPORTANT: Never provide investment advice, tax advice, or financial planning recommendations.
 If asked about investments or taxes, politely decline and suggest consulting a professional.`,

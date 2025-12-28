@@ -2,16 +2,65 @@
 
 A privacy-first personal finance management application with AI-powered insights, built for Canadians who want control over their money without complexity.
 
+## Current Version: v1.2
+
+**92+ features implemented across 7 tiers** including comprehensive AI insights, data visualization, advanced UX, and powerful automation tools.
+
+---
+
 ## Features
 
-- **Google OAuth Authentication** - Secure sign-in with Google, no passwords stored
-- **Transaction Management** - Track income and expenses with categories
-- **CSV Import** - Import transactions from your bank with flexible column mapping
-- **Budget Management** - Set monthly budgets with 50/30/20 framework support
-- **Savings Goals** - Track progress toward financial goals with contributions
-- **Recurring Bills** - Manage bills with due date alerts (overdue, due soon)
-- **AI Chat Assistant** - Natural language interface to add transactions, check spending, and get budget status
-- **Tax Summary** - Canadian tax category support (Charity, Medical, Business, etc.)
+### Core Financial Tracking
+- **Multi-Account Management** - Track checking, savings, credit, cash, and investment accounts
+- **Transaction Management** - Add, edit, delete with categories, tags, and descriptions
+- **CSV Import** - Import from bank with flexible column mapping and duplicate detection
+- **Budget Management** - Monthly/weekly/yearly budgets with templates and rollover
+- **Savings Goals** - Track progress with milestones, auto-contribute, and sharing
+- **Recurring Bills** - Manage bills with due dates, categories, and payment streaks
+- **Recurring Transactions** - Auto-generate salary, subscriptions, etc.
+
+### AI-Powered Features (16+ AI Tools)
+- **AI Chat Assistant** - Natural language interface for all financial tasks
+- **Financial Health Score** - AI-calculated score (0-100) with breakdown
+- **AI Insights Widget** - 4-tab dashboard (Overview, Predictions, Patterns, Alerts)
+- **Anomaly Detection** - Flags unusual transactions automatically
+- **Cash Flow Forecasting** - 30-day balance predictions
+- **Spending Pattern Analysis** - Day-of-week and time-of-month patterns
+- **Smart Categorization** - AI suggests categories for transactions
+- **What-If Scenarios** - "What if I cut dining by 50%?" projections
+- **Bill Negotiation Tips** - AI suggests how to reduce bills
+- **Voice I/O** - Speech-to-text input and text-to-speech responses
+
+### Data Visualization (15 Chart Types)
+- Spending trends, category breakdowns, income vs expense
+- Net worth tracking, budget gauges, budget heatmaps
+- Goal timelines, contribution charts
+- Bill calendar, cash flow waterfall, category trends
+
+### UX Enhancements
+- **Keyboard Shortcuts** - Power user navigation (G+T, G+B, etc.)
+- **Command Palette** - Cmd/Ctrl+K for quick actions
+- **Dark Mode** - System preference or manual toggle
+- **Quick Add FAB** - Floating action button for fast entry
+- **Dashboard Customization** - Drag-and-drop widgets
+- **Onboarding Tour** - Guided setup for new users
+
+### Transaction Power Features
+- **Bulk Operations** - Multi-select, bulk delete, categorize, tag
+- **Auto-Categorization Rules** - Define rules like "UBER → Transportation"
+- **Split Transactions** - Divide across multiple categories
+- **Transaction Templates** - Save common transactions for one-click entry
+- **Tags System** - Custom tags with colors for organization
+
+### Reports & Analytics
+- Custom date range reports
+- Year-over-year comparisons
+- Merchant spending analysis
+- Category deep dives
+- Savings rate dashboard
+- Tax summary with deductions
+
+---
 
 ## Tech Stack
 
@@ -22,9 +71,12 @@ A privacy-first personal finance management application with AI-powered insights
 | Database | Supabase (PostgreSQL with RLS) |
 | Authentication | NextAuth.js + Google OAuth |
 | AI Integration | Vercel AI SDK with Z.AI |
-| UI | Tailwind CSS + shadcn/ui |
-| Validation | Zod |
+| UI | Tailwind CSS + shadcn/ui (40+ components) |
 | Charts | Recharts |
+| Validation | Zod |
+| Forms | React Hook Form |
+
+---
 
 ## Prerequisites
 
@@ -34,24 +86,22 @@ A privacy-first personal finance management application with AI-powered insights
 - A Google Cloud Console account (for OAuth)
 - A Z.AI API key (or OpenAI-compatible provider)
 
+---
+
 ## Environment Variables
 
-Create a `.env.local` file in the root directory with the following variables:
+Create a `.env.local` file in the root directory:
 
 ```bash
 # ===========================================
 # Google OAuth (Google Cloud Console)
 # ===========================================
-# Create at: https://console.cloud.google.com/apis/credentials
-# 1. Create a new OAuth 2.0 Client ID
-# 2. Add authorized redirect URI: http://localhost:3000/api/auth/callback/google
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 
 # ===========================================
 # NextAuth.js
 # ===========================================
-# Generate secret: openssl rand -base64 32
 NEXTAUTH_SECRET=your_nextauth_secret_here
 NEXTAUTH_URL=http://localhost:3000
 AUTH_TRUST_HOST=true
@@ -59,7 +109,6 @@ AUTH_TRUST_HOST=true
 # ===========================================
 # Supabase
 # ===========================================
-# Get from: https://supabase.com/dashboard/project/_/settings/api
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
@@ -70,106 +119,129 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 OPENAI_API_KEY=your_zai_api_key
 ```
 
-## Setup Guide
+---
 
-### 1. Google Cloud Console Setup
+## Quick Start
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Navigate to **APIs & Services > Credentials**
-4. Click **Create Credentials > OAuth 2.0 Client ID**
-5. Configure the OAuth consent screen if prompted
-6. Set Application type to **Web application**
-7. Add authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
-8. Copy the Client ID and Client Secret to your `.env.local`
-
-### 2. Supabase Setup
-
-1. Go to [Supabase Dashboard](https://supabase.com/dashboard)
-2. Create a new project
-3. Go to **Settings > API** to get your keys
-4. Copy the Project URL, anon key, and service_role key to `.env.local`
-5. Run the database migrations (see below)
-
-### 3. Database Migrations
-
-The migrations are located in `supabase/migrations/`. Run them in order:
+### 1. Clone and Install
 
 ```bash
-# Using Supabase CLI
-supabase db push
-
-# Or manually run each migration file in order via Supabase SQL Editor:
-# 001_auth_schema.sql
-# 002_accounts.sql
-# 003_categories.sql
-# 004_transactions.sql
-# 005_budgets.sql
-# 006_bills.sql
-# 007_goals.sql
-# 008_chat.sql
-# 009_user_profiles.sql
-```
-
-### 4. Install Dependencies
-
-```bash
+git clone https://github.com/yourusername/pocket-pilot.git
+cd pocket-pilot
 npm install
 ```
 
-### 5. Run Development Server
+### 2. Configure Environment
+
+Copy `.env.example` to `.env.local` and fill in your credentials.
+
+### 3. Database Setup
+
+Run migrations via Supabase CLI or manually in SQL Editor:
+
+```bash
+supabase db push
+```
+
+### 4. Start Development Server
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000)
+
+---
 
 ## Project Structure
 
 ```
-simple-tracker/
+pocket-pilot/
 ├── src/
 │   ├── app/                    # Next.js App Router
-│   │   ├── api/               # API routes
+│   │   ├── api/               # 50+ API routes
 │   │   │   ├── auth/          # NextAuth.js
 │   │   │   ├── chat/          # AI chat endpoints
-│   │   │   ├── accounts/      # Account CRUD
-│   │   │   ├── categories/    # Category CRUD
-│   │   │   ├── transactions/  # Transaction CRUD + import
-│   │   │   ├── budgets/       # Budget CRUD
-│   │   │   ├── bills/         # Bill CRUD
-│   │   │   ├── goals/         # Goal CRUD + contributions
-│   │   │   └── profile/       # User profile
+│   │   │   ├── ai-insights/   # AI analytics endpoint
+│   │   │   └── ...            # CRUD for all entities
 │   │   ├── dashboard/         # Protected app pages
-│   │   │   ├── accounts/
-│   │   │   ├── transactions/
-│   │   │   ├── budgets/
-│   │   │   ├── bills/
-│   │   │   ├── goals/
-│   │   │   └── categories/
-│   │   ├── login/             # Login page
-│   │   └── page.tsx           # Landing page
+│   │   │   ├── accounts/      # Account management
+│   │   │   ├── transactions/  # Transaction list + import
+│   │   │   ├── budgets/       # Budget tracking + templates
+│   │   │   ├── goals/         # Savings goals + milestones
+│   │   │   ├── bills/         # Bill management
+│   │   │   ├── analytics/     # Charts dashboard
+│   │   │   ├── reports/       # Financial reports
+│   │   │   └── recurring/     # Recurring transactions
+│   │   └── onboarding/        # New user setup
 │   ├── components/
 │   │   ├── ui/                # shadcn/ui components (40+)
-│   │   ├── forms/             # Form components
+│   │   ├── forms/             # Form components (15+)
+│   │   ├── charts/            # Recharts wrappers (15)
 │   │   └── ...                # Feature components
 │   ├── lib/
 │   │   ├── auth.ts            # NextAuth configuration
 │   │   ├── supabase.ts        # Supabase clients
-│   │   ├── utils.ts           # Utility functions
-│   │   └── validators/        # Zod schemas
-│   └── types/
-│       └── next-auth.d.ts     # Extended session types
+│   │   ├── errors.ts          # Standardized error handling
+│   │   └── validators/        # Zod schemas (15+)
+│   └── hooks/                 # Custom React hooks
 ├── supabase/
-│   └── migrations/            # Database migrations
-├── docs/                      # Project documentation
-│   ├── spec.md               # Product requirements
-│   ├── architecture.md       # Technical architecture
-│   ├── data-model.md         # Database schema
-│   └── decision-log.md       # ADRs
-└── public/                    # Static assets
+│   └── migrations/            # Database migrations (15+)
+└── docs/                      # Project documentation
 ```
+
+---
+
+## AI Chat Commands
+
+The AI assistant (Pocket Pilot) can help you:
+
+**Add Transactions:**
+- "Add $50 for groceries today"
+- "I spent $120 on gas yesterday"
+- "Add my paycheck of $2000"
+
+**Manage Bills:**
+- "Add my $100 phone bill due on the 15th"
+- "What bills are due this week?"
+
+**Check Spending:**
+- "How much did I spend on food this month?"
+- "Show me my spending trends"
+- "Compare this month to last month"
+
+**Budget Status:**
+- "Am I over budget on entertainment?"
+- "What budgets have room left?"
+
+**Goals:**
+- "Add $200 to my vacation fund"
+- "How close am I to my emergency fund goal?"
+
+**Analysis:**
+- "What if I cut dining by 50%?"
+- "Find savings opportunities"
+- "Give me financial suggestions"
+
+---
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `⌘/Ctrl + K` | Open command palette |
+| `/` | Open search |
+| `?` | Show shortcuts help |
+| `n` | New transaction |
+| `g + h` | Go to dashboard |
+| `g + t` | Go to transactions |
+| `g + b` | Go to budgets |
+| `g + g` | Go to goals |
+| `g + i` | Go to bills |
+| `g + r` | Go to reports |
+| `g + y` | Go to analytics |
+
+---
 
 ## Available Scripts
 
@@ -179,34 +251,70 @@ simple-tracker/
 | `npm run build` | Build for production |
 | `npm start` | Start production server |
 | `npm run lint` | Run ESLint |
+| `npm run typecheck` | Run TypeScript checks |
 
-## Key Conventions
+---
 
-- **Currency**: CAD only (Canadian dollars)
-- **Amounts**: Stored as signed values (negative = expense, positive = income)
-- **Budgets**: Monthly periods only
-- **Authentication**: Google OAuth only, no password storage
-- **Privacy**: All data is user-scoped with Row Level Security (RLS)
+## DevOps & CI/CD
 
-## AI Chat Commands
+- **GitHub Actions** - Build, lint, type check on every PR
+- **Security Scanning** - npm audit + CodeQL analysis
+- **Vercel Deployments** - Preview on PR, production on merge
+- **Dependabot** - Automated dependency updates
+- **Git Hooks** - Husky + lint-staged + commitlint
 
-The AI assistant (Pocket Pilot) can help you:
-
-- **Add transactions**: "Add $50 for groceries today"
-- **Add bills**: "Add my $100 phone bill due on the 15th"
-- **Check spending**: "How much did I spend on food this month?"
-- **Budget status**: "Am I over budget on entertainment?"
-- **Goal contributions**: "Add $200 to my vacation fund"
+---
 
 ## Documentation
 
 See the `/docs` folder for detailed documentation:
 
-- `docs/spec.md` - Product requirements and acceptance criteria
-- `docs/architecture.md` - Technical architecture and patterns
-- `docs/data-model.md` - Database schema and relationships
-- `docs/decision-log.md` - Architectural Decision Records (ADRs)
-- `docs/glossary.md` - Terminology definitions
+| Document | Description |
+|----------|-------------|
+| `docs/spec.md` | Product requirements and acceptance criteria |
+| `docs/architecture.md` | Technical architecture and patterns |
+| `docs/data-model.md` | Database schema and relationships |
+| `docs/decision-log.md` | Architectural Decision Records (ADRs) |
+| `docs/next-tasks.md` | Feature roadmap and upcoming work |
+| `docs/PROGRESS.md` | Implementation progress tracking |
+| `docs/devops.md` | CI/CD and deployment documentation |
+
+---
+
+## Key Conventions
+
+- **Currency:** CAD only (Canadian dollars)
+- **Amounts:** Stored as signed values (negative = expense, positive = income)
+- **Authentication:** Google OAuth only, no password storage
+- **Privacy:** All data is user-scoped with Row Level Security (RLS)
+- **Manual-First:** No bank sync; user-driven entry
+
+---
+
+## Roadmap (v1.3+)
+
+The next phase focuses on AI enhancements:
+
+1. **AI Confirmation Fix** - Ensure AI responds after executing actions
+2. **Quick Reply Buttons** - Yes/No suggestions in chat
+3. **Weekly AI Summary** - Auto-generated financial digest
+4. **Monthly AI Report** - Comprehensive month-end analysis
+5. **Receipt OCR** - Scan receipts to auto-fill transactions
+6. **Smart Merchant Recognition** - AI learns merchant variations
+
+See `docs/next-tasks.md` for the full roadmap.
+
+---
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
 
 ## License
 

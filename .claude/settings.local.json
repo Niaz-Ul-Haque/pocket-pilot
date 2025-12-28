@@ -26,7 +26,8 @@
       "Bash(cd:*)",
       "Bash(tree:*)",
       "Bash(npx next lint:*)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(dir:*)"
     ]
   },
   "outputStyle": "default"

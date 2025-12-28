@@ -11,6 +11,9 @@ permissions:
 jobs:
   bundle-size:
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy
     steps:
       - name: Checkout base
         uses: actions/checkout@v4

@@ -51,6 +51,7 @@ import { type TransactionWithDetails, formatAmount, getAmountColorClass } from "
 import { type Category } from "@/lib/validators/category"
 import { cn } from "@/lib/utils"
 import { AIChatModal } from "@/components/ai-chat-modal"
+import { AIInsightsWidget } from "@/components/ai-insights-widget"
 
 // Get icon based on account type
 function getAccountIcon(type: string) {
@@ -394,6 +395,9 @@ export default function DashboardPage() {
 
       {/* Quick Actions */}
       <QuickActions onOpenAIChat={() => setIsAIChatOpen(true)} />
+
+      {/* AI Insights Widget */}
+      <AIInsightsWidget />
 
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-3">

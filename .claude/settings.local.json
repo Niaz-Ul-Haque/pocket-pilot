@@ -23,7 +23,8 @@
       "Bash(Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue)",
       "Bash(npx tsc:*)",
       "WebFetch(domain:ai-sdk.dev)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(tree:*)"
     ]
   },
   "outputStyle": "default"

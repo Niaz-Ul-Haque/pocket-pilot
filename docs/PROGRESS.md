@@ -1,6 +1,6 @@
 # Implementation Progress
 
-**Last Updated:** 2025-12-27
+**Last Updated:** 2025-12-28
 
 Track story completion status. This file reflects the actual implementation state.
 
@@ -115,6 +115,7 @@ Track story completion status. This file reflects the actual implementation stat
 | TagManagerModal | src/components/tag-manager-modal.tsx | ✅ |
 | TagPicker | src/components/tag-picker.tsx | ✅ |
 | NotificationBell | src/components/notification-bell.tsx | ✅ |
+| AIInsightsWidget | src/components/ai-insights-widget.tsx | ✅ |
 | GoogleSigninButton | src/components/google-signin-button.tsx | ✅ |
 | LogoutButton | src/components/logout-button.tsx | ✅ |
 | Providers | src/components/providers.tsx | ✅ |
@@ -156,6 +157,7 @@ Track story completion status. This file reflects the actual implementation stat
 | /api/recurring-transactions | GET, POST | ✅ | List/create recurring transactions |
 | /api/recurring-transactions/[id] | GET, PUT, DELETE | ✅ | Individual recurring transaction ops |
 | /api/recurring-transactions/generate | POST | ✅ | Auto-generate due transactions |
+| /api/ai-insights | GET | ✅ | Comprehensive AI analytics (health score, predictions, patterns, alerts) |
 
 ---
 
@@ -412,6 +414,40 @@ src/
 - Debounced search to reduce API calls
 - Page reset on filter changes
 
+### TIER 1 AI Enhancements (v1.2)
+
+**New API Endpoint: `/api/ai-insights`**
+Comprehensive AI analytics endpoint providing:
+- **Financial Health Score** (0-100): Evaluates budget adherence (25pts), savings rate (25pts), bill payments (25pts), goal progress (25pts)
+- **Proactive Insights**: AI-generated tips with high/medium/low priority
+- **Predictive Spending Alerts**: Warns before categories exceed budget with days-until-exceed
+- **Anomaly Detection**: Flags unusual transactions using statistical z-score analysis
+- **Spending Pattern Analysis**: Day-of-week and time-of-month patterns with peak day identification
+- **Subscription Audit**: Identifies recurring charges with monthly/annual cost estimates
+- **Duplicate Transaction Detection**: Finds potential duplicate entries
+- **Expense Predictions**: Weekly and monthly projections with category breakdowns
+- **Cash Flow Forecasting**: 30-day balance prediction with upcoming inflows/outflows
+- **Goal Achievement Predictions**: ETAs, required monthly contributions, on-track status
+- **Bill Impact Analysis**: Upcoming bill effects on balance with recommendations
+
+**New AI Chat Tools (8 tools):**
+- `smart_categorize`: Suggests categories for uncategorized transactions
+- `what_if_scenario`: Financial projections ("What if I cut dining by 50%?")
+- `get_report`: Natural language financial reports for any period
+- `compare_periods`: Compare spending between time periods
+- `find_savings_opportunities`: Identifies areas to reduce spending
+- `get_bill_negotiation_tips`: Tips for reducing bills based on type
+- `check_unused_budgets`: Finds underutilized budgets for reallocation
+- `track_financial_habits`: Scores financial habits with positive/negative tracking
+
+**New Dashboard Component: `AIInsightsWidget`**
+- Tabbed interface: Overview, Predictions, Patterns, Alerts
+- Overview: Health score gauge, key insights, summary stats
+- Predictions: Expense forecasts, cash flow, goal predictions
+- Patterns: Spending patterns, subscription audit, bill impact
+- Alerts: Predictive alerts, anomalies, duplicates
+- Auto-refresh with manual refresh button
+
 ---
 
 ## Audit Log
@@ -426,3 +462,4 @@ src/
 | 2025-12-27 | Claude | Recurring Transactions (v1.1): Full implementation with database migration, validator, API routes (CRUD + generate), form component, dashboard page, nav link, AI tool integration. Build passes with no lint errors. |
 | 2025-12-27 | Claude | Custom Hooks + Error Handling (v1.1): Created standardized error utilities (src/lib/errors.ts), custom hooks (useApiQuery, useApiMutation, useFormErrors in src/hooks/). Migrated /api/accounts as reference. Build passes with no lint errors. |
 | 2025-12-27 | Claude | Voice Input + Voice Output + Pagination (v1.1): Implemented speech-to-text (useSpeechRecognition hook, mic button in chat), text-to-speech (useSpeechSynthesis hook, voice settings, auto-speak, per-message playback), and transactions pagination (server-side with 25/page, pagination controls, server-side filtering). v1.1 complete! Build passes with no lint errors. |
+| 2025-12-28 | Claude | TIER 1 AI Enhancements (v1.2): Implemented 21/23 AI features. New `/api/ai-insights` endpoint with comprehensive analytics (health score, anomaly detection, predictions, patterns). Added 8 new AI chat tools (smart_categorize, what_if_scenario, get_report, compare_periods, find_savings_opportunities, get_bill_negotiation_tips, check_unused_budgets, track_financial_habits). Created AIInsightsWidget dashboard component with 4 tabs. Parked: Weekly AI Summary, Monthly AI Report. Build passes with no lint errors. |

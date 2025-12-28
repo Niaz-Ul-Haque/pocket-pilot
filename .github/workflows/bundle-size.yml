@@ -52,7 +52,7 @@ jobs:
           npx tsx scripts/bundle-size.ts --root . --out ../head-bundle-size.json
           npx tsx scripts/compare-bundle-size.ts --base ../base-bundle-size.json --head ../head-bundle-size.json --out ../bundle-size-comment.md
       - name: Comment on PR
-        uses: peter-evans/create-or-update-comment@v4
+        uses: peter-evans/create-or-update-comment@v5
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body-path: bundle-size-comment.md

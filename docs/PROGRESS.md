@@ -28,6 +28,23 @@ Track story completion status. This file reflects the actual implementation stat
 
 ---
 
+## Tier 0: DevOps & Automation
+
+| Item | Status | Notes |
+|------|--------|-------|
+| CI Workflows | Complete | Build, lint, type check, and test (if present) on PRs and master |
+| Security Scanning | Complete | npm audit (high+) and CodeQL |
+| Vercel Preview Deploys | Complete | PR previews with Vercel |
+| Vercel Production Deploy | Complete | Manual comment trigger on master commit |
+| Dependabot | Complete | Weekly npm + GitHub Actions updates |
+| Bundle Size Checks | Complete | PR size diff comment |
+| PR Auto Labeling | Complete | frontend/api/docs labels |
+| Release Automation | Complete | GitHub releases on version tags |
+| Git Hooks | Complete | Husky + lint-staged + commitlint |
+| Templates | Complete | Issue templates + PR template |
+
+---
+
 ## Epic 1: Onboarding & Setup
 
 | Story | Status | Notes |
@@ -463,3 +480,8 @@ Comprehensive AI analytics endpoint providing:
 | 2025-12-27 | Claude | Custom Hooks + Error Handling (v1.1): Created standardized error utilities (src/lib/errors.ts), custom hooks (useApiQuery, useApiMutation, useFormErrors in src/hooks/). Migrated /api/accounts as reference. Build passes with no lint errors. |
 | 2025-12-27 | Claude | Voice Input + Voice Output + Pagination (v1.1): Implemented speech-to-text (useSpeechRecognition hook, mic button in chat), text-to-speech (useSpeechSynthesis hook, voice settings, auto-speak, per-message playback), and transactions pagination (server-side with 25/page, pagination controls, server-side filtering). v1.1 complete! Build passes with no lint errors. |
 | 2025-12-28 | Claude | TIER 1 AI Enhancements (v1.2): Implemented 21/23 AI features. New `/api/ai-insights` endpoint with comprehensive analytics (health score, anomaly detection, predictions, patterns). Added 8 new AI chat tools (smart_categorize, what_if_scenario, get_report, compare_periods, find_savings_opportunities, get_bill_negotiation_tips, check_unused_budgets, track_financial_habits). Created AIInsightsWidget dashboard component with 4 tabs. Parked: Weekly AI Summary, Monthly AI Report. Build passes with no lint errors. |
+| 2025-12-28 | Claude | Tier 0 DevOps: GitHub Actions CI, security scans, Vercel preview/prod deploy, bundle size reporting, Dependabot, labeler, release automation, Husky/lint-staged/commitlint, issue/PR templates. |
+
+
+
+

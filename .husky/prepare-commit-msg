@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+npx --no-install tsx scripts/prepare-commit-msg.ts "$1" "$2" "$3"

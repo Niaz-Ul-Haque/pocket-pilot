@@ -1,0 +1,18 @@
+frontend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/app/**"
+          - "src/components/**"
+          - "public/**"
+
+api:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/app/api/**"
+
+docs:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "docs/**"
+          - "README.md"
+          - ".claude/**"

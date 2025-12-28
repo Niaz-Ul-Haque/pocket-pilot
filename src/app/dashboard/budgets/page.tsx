@@ -45,6 +45,11 @@ import {
 } from "@/lib/validators/budget"
 import type { Category } from "@/lib/validators/category"
 import { cn } from "@/lib/utils"
+import {
+  BudgetGaugeChart,
+  BudgetComparisonChart,
+  BudgetHeatmap,
+} from "@/components/charts"
 
 export default function BudgetsPage() {
   const [budgets, setBudgets] = useState<BudgetWithDetails[]>([])
@@ -354,6 +359,18 @@ export default function BudgetsPage() {
               </Card>
             )
           })}
+        </div>
+      )}
+
+      {/* Budget Visualizations */}
+      {budgets.length > 0 && (
+        <div className="mt-8 space-y-6">
+          <h2 className="text-xl font-semibold">Budget Analytics</h2>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <BudgetGaugeChart />
+            <BudgetComparisonChart />
+          </div>
+          <BudgetHeatmap />
         </div>
       )}
 

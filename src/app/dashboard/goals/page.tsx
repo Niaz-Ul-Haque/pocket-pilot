@@ -50,6 +50,10 @@ import {
   getGoalStatusColor,
 } from "@/lib/validators/goal"
 import { cn } from "@/lib/utils"
+import {
+  GoalTimelineChart,
+  GoalContributionChart,
+} from "@/components/charts"
 
 export default function GoalsPage() {
   const [goals, setGoals] = useState<GoalWithDetails[]>([])
@@ -268,6 +272,17 @@ export default function GoalsPage() {
             </div>
           )}
         </>
+      )}
+
+      {/* Goal Analytics */}
+      {goals.length > 0 && (
+        <div className="mt-8 space-y-6">
+          <h2 className="text-xl font-semibold">Goal Analytics</h2>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <GoalTimelineChart />
+            <GoalContributionChart months={6} />
+          </div>
+        </div>
       )}
 
       {/* Create/Edit Goal Dialog */}

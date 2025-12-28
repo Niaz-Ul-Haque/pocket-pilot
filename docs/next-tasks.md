@@ -162,45 +162,80 @@ This ensures production deployments are intentional and only happen after explic
 
 ## TIER 2: Data Visualization (15 Features)
 
+**Status: 15/15 Complete**
+
 ### Dashboard Charts
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| Spending Trend Line Chart | Monthly/weekly spending over time (last 6-12 months) | Pending |
-| Category Breakdown Donut Chart | Where money is going this month | Pending |
-| Income vs Expense Bar Chart | Side-by-side monthly comparison | Pending |
-| Net Worth Over Time | Historical line chart tracking total assets - liabilities | Pending |
-| Daily Spending Sparklines | Mini charts showing daily spending in transaction list | Pending |
+| Spending Trend Line Chart | Monthly/weekly spending over time (last 6-12 months) | ✅ Complete |
+| Category Breakdown Donut Chart | Where money is going this month | ✅ Complete |
+| Income vs Expense Bar Chart | Side-by-side monthly comparison | ✅ Complete |
+| Net Worth Over Time | Historical line chart tracking total assets - liabilities | ✅ Complete |
+| Daily Spending Sparklines | Mini charts showing daily spending in transaction list | ✅ Complete |
 
 ### Budget Visualizations
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| Budget Gauge Charts | Circular gauges showing budget utilization percentage | Pending |
-| Budget Comparison Chart | This month vs last month by category | Pending |
-| Budget History Heatmap | Calendar showing which days had heavy spending | Pending |
+| Budget Gauge Charts | Circular gauges showing budget utilization percentage | ✅ Complete |
+| Budget Comparison Chart | This month vs last month by category | ✅ Complete |
+| Budget History Heatmap | Calendar showing which days had heavy spending | ✅ Complete |
 
 ### Goal Visualizations
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| Goal Progress Timeline | Visual timeline showing projected completion date | Pending |
-| Goal Contribution Chart | Bar chart of contributions over time | Pending |
+| Goal Progress Timeline | Visual timeline showing projected completion date | ✅ Complete |
+| Goal Contribution Chart | Bar chart of contributions over time | ✅ Complete |
 
 ### Bill Visualizations
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| Bill Calendar View | Full calendar with bill due dates marked | Pending |
-| Monthly Bills Summary | Pie chart of recurring costs breakdown | Pending |
-| Bill Payment Timeline | Upcoming bills on a timeline | Pending |
+| Bill Calendar View | Full calendar with bill due dates marked | ✅ Complete |
+| Monthly Bills Summary | Pie chart of recurring costs breakdown | ✅ Complete |
+| Bill Payment Timeline | Upcoming bills on a timeline | ✅ Complete |
 
 ### Advanced Charts
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| Cash Flow Waterfall | Income → expenses → categories → net visualization | Pending |
-| Category Trends Comparison | Multi-line chart comparing categories over time | Pending |
+| Cash Flow Waterfall | Income → expenses → categories → net visualization | ✅ Complete |
+| Category Trends Comparison | Multi-line chart comparing categories over time | ✅ Complete |
+
+### Implementation Details
+
+**New API Endpoint: `/api/chart-data`**
+- Supports multiple chart types via `type` query parameter
+- Available types: `spending-trend`, `category-breakdown`, `daily-spending`, `net-worth`, `budget-comparison`, `spending-heatmap`, `goal-timeline`, `goal-contributions`, `bill-calendar`, `bills-summary`, `cash-flow-waterfall`, `category-trends`
+
+**New Components in `src/components/charts/`:**
+- `SpendingTrendChart` - Line chart with income/expenses/net
+- `CategoryBreakdownChart` - Donut chart with category distribution
+- `IncomeVsExpenseChart` - Bar chart comparing income vs expenses
+- `NetWorthChart` - Area chart showing net worth over time
+- `DailySparkline` / `DailySpendingSparklineCard` - Mini sparkline charts
+- `BudgetGaugeChart` - Radial bar charts for budget utilization
+- `BudgetComparisonChart` - Horizontal bar chart comparing months
+- `BudgetHeatmap` - Calendar heatmap of daily spending
+- `GoalTimelineChart` - Timeline view with progress and projections
+- `GoalContributionChart` - Bar chart of monthly contributions
+- `BillCalendar` - Full calendar view with bill markers
+- `MonthlyBillsChart` - Pie chart of recurring bills
+- `BillTimeline` - Vertical timeline of upcoming bills
+- `CashFlowWaterfall` - Waterfall chart from income to net
+- `CategoryTrendsChart` - Multi-line chart comparing categories
+
+**New Analytics Page: `/dashboard/analytics`**
+- Tabbed interface with Overview, Spending, Budgets, Goals, Bills sections
+- Comprehensive view of all visualizations
+
+**Integration:**
+- Main dashboard: SpendingTrendChart, CategoryBreakdownChart, IncomeVsExpenseChart, CashFlowWaterfall
+- Budgets page: BudgetGaugeChart, BudgetComparisonChart, BudgetHeatmap
+- Goals page: GoalTimelineChart, GoalContributionChart
+- Bills page: BillCalendar, MonthlyBillsChart, BillTimeline
 
 ---
 
@@ -237,30 +272,77 @@ This ensures production deployments are intentional and only happen after explic
 
 ## TIER 4: Transaction Power Features (10 Features)
 
+**Status: 10/10 Complete**
+
 ### Bulk Operations
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| Multi-Select Transactions | Checkbox selection for multiple transactions | Pending |
-| Bulk Delete | Delete multiple selected transactions at once | Pending |
-| Bulk Edit Category | Change category for multiple transactions | Pending |
-| Bulk Add Tags | Add tags to multiple transactions at once | Pending |
+| Multi-Select Transactions | Checkbox selection for multiple transactions | ✅ Complete |
+| Bulk Delete | Delete multiple selected transactions at once | ✅ Complete |
+| Bulk Edit Category | Change category for multiple transactions | ✅ Complete |
+| Bulk Add Tags | Add tags to multiple transactions at once | ✅ Complete |
 
 ### Automation
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| Auto-Categorization Rules | Define rules like "Description contains 'UBER' → Transportation" | Pending |
-| Rule Management UI | Create, edit, delete categorization rules | Pending |
-| Apply Rules to Existing | Run rules against historical transactions | Pending |
+| Auto-Categorization Rules | Define rules like "Description contains 'UBER' → Transportation" | ✅ Complete |
+| Rule Management UI | Create, edit, delete categorization rules | ✅ Complete |
+| Apply Rules to Existing | Run rules against historical transactions | ✅ Complete |
 
 ### Advanced Features
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| Split Transactions | Divide one transaction across multiple categories | Pending |
-| Transaction Templates | Save common transactions for one-click entry | Pending |
-| Transaction Linking | Link related transactions beyond transfers (e.g., refunds) | Pending |
+| Split Transactions | Divide one transaction across multiple categories | ✅ Complete |
+| Transaction Templates | Save common transactions for one-click entry | ✅ Complete |
+| Transaction Linking | Link related transactions beyond transfers (e.g., refunds) | ✅ Complete |
+
+### Implementation Details
+
+**Database Migration: `013_tier4_features.sql`**
+- `categorization_rules` table for auto-categorization
+- `transaction_templates` table with usage tracking
+- `template_tags` junction table for template tag associations
+- `transaction_links` table for linking related transactions
+- Added `is_split_parent`, `split_parent_id`, `split_group_id` columns to transactions
+
+**New Validators in `src/lib/validators/`:**
+- `categorization-rule.ts` - Rule types: contains, starts_with, ends_with, exact, regex
+- `transaction-template.ts` - Templates with tags support
+- `transaction-link.ts` - Link types: refund, related, partial_refund, chargeback
+- `split-transaction.ts` - Split validation with amount verification
+- `bulk-operations.ts` - Bulk delete, update-category, add-tags schemas
+
+**New API Endpoints:**
+- `POST /api/transactions/bulk/delete` - Bulk delete transactions
+- `POST /api/transactions/bulk/update-category` - Bulk update category
+- `POST /api/transactions/bulk/add-tags` - Bulk add tags
+- `GET|POST /api/categorization-rules` - List/create rules
+- `GET|PUT|DELETE /api/categorization-rules/[id]` - Rule CRUD
+- `POST /api/categorization-rules/apply` - Apply rules with dry_run option
+- `POST /api/categorization-rules/reorder` - Reorder rules
+- `GET|POST /api/transaction-templates` - List/create templates
+- `GET|PUT|DELETE /api/transaction-templates/[id]` - Template CRUD
+- `POST /api/transaction-templates/[id]/apply` - Create transaction from template
+- `GET|POST /api/transaction-links` - List/create links
+- `GET|PUT|DELETE /api/transaction-links/[id]` - Link CRUD
+- `GET|POST /api/transactions/[id]/split` - Split transaction
+
+**New Components:**
+- `BulkActionsToolbar` - Toolbar with bulk action buttons and dialogs
+- `CategorizationRuleForm` - Form for creating/editing rules
+- `SplitTransactionDialog` - Dialog for splitting transactions
+- `TransactionTemplateForm` - Form for creating/editing templates
+- `TransactionLinkDialog` - Dialog for linking transactions
+
+**New Pages:**
+- `/dashboard/settings/auto-categorization` - Manage categorization rules
+- `/dashboard/templates` - Manage transaction templates
+
+**Updated Pages:**
+- `/dashboard/transactions` - Added multi-select, bulk actions toolbar, split/link menu items
 
 ---
 

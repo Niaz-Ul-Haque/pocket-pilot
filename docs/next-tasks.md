@@ -6,9 +6,25 @@ This document outlines the comprehensive feature roadmap for Pocket Pilot, organ
 
 ## Recently Completed
 
+### v1.3 - Complete (TIER 9 AI Features)
+
+**TIER 9: Advanced AI Capabilities** - 11/12 Complete (1 Parked)
+- Weekly AI Summary widget with auto-generation
+- Monthly AI Report with PDF export capability
+- AI Chat Memory (Cross-Session) with persistent preferences
+- Proactive AI Notifications (budget warnings, bill reminders, savings opportunities)
+- Smart Merchant Recognition with pattern matching (AMZN = Amazon, etc.)
+- AI-Powered Natural Language Search ("show me coffee last month")
+- Spending Prediction Accuracy Tracking with learning from corrections
+- AI Financial Calendar with optimal payment scheduling
+- AI Voice Commands with speech synthesis integration
+- AI Learning Mode (teach AI via conversation)
+- AI Export/Import for preferences and data
+- Parked: Receipt OCR
+
 ### v1.2 - Complete (100+ Features Across 8 Tiers)
 
-**TIER 8: AI Core Improvements** - 8/8 Complete (NEW)
+**TIER 8: AI Core Improvements** - 8/8 Complete
 - AI Confirmation Acknowledgement Fix
 - AI Tool Error Recovery (better error messages with retry suggestions)
 - AI Context Memory (within session - remembers preferences)
@@ -151,22 +167,22 @@ Bug Fixes (TIER 8) - ✅ All Complete:
 
 ## TIER 9: Advanced AI Capabilities
 
-**Priority: HIGH - Complete Parked Features First**
+**Priority: HIGH - Complete**
 
 | Feature | Description | Priority | Status |
 |---------|-------------|----------|--------|
-| Weekly AI Summary | Auto-generated weekly financial digest widget (PARKED from v1.2) | High | Pending |
-| Monthly AI Report | Comprehensive month-end analysis with PDF export (PARKED from v1.2) | High | Pending |
-| Receipt OCR | Scan receipts to auto-fill transactions (spec at docs/receipt-ocr-spec.md) | High | Pending |
-| AI Chat Memory (Cross-Session) | Remember user context across conversations | Medium | Pending |
-| Proactive AI Notifications | AI initiates alerts/suggestions without user prompting | Medium | Pending |
-| Smart Merchant Recognition | AI learns merchant name variations (AMZN = Amazon, UBER* = Uber) | Medium | Pending |
-| AI-Powered Natural Language Search | "Show me coffee purchases last month" in search bar | Medium | Pending |
-| Spending Prediction Accuracy Tracking | AI learns from corrections to improve future predictions | Medium | Pending |
-| AI Financial Calendar | AI suggests optimal payment timing for bills | Low | Pending |
-| AI Voice Commands | Full voice-controlled transaction entry without typing | Low | Pending |
-| AI Learning Mode | User can teach AI custom categorization rules via conversation | Low | Pending |
-| AI Export/Import | Export conversation context, import preferences | Low | Pending |
+| Weekly AI Summary | Auto-generated weekly financial digest widget (PARKED from v1.2) | High | ✅ Complete |
+| Monthly AI Report | Comprehensive month-end analysis with PDF export (PARKED from v1.2) | High | ✅ Complete |
+| Receipt OCR | Scan receipts to auto-fill transactions (spec at docs/receipt-ocr-spec.md) | High | 🔴 Parked |
+| AI Chat Memory (Cross-Session) | Remember user context across conversations | Medium | ✅ Complete |
+| Proactive AI Notifications | AI initiates alerts/suggestions without user prompting | Medium | ✅ Complete |
+| Smart Merchant Recognition | AI learns merchant name variations (AMZN = Amazon, UBER* = Uber) | Medium | ✅ Complete |
+| AI-Powered Natural Language Search | "Show me coffee purchases last month" in search bar | Medium | ✅ Complete |
+| Spending Prediction Accuracy Tracking | AI learns from corrections to improve future predictions | Medium | ✅ Complete |
+| AI Financial Calendar | AI suggests optimal payment timing for bills | Low | ✅ Complete |
+| AI Voice Commands | Full voice-controlled transaction entry without typing | Low | ✅ Complete |
+| AI Learning Mode | User can teach AI custom categorization rules via conversation | Low | ✅ Complete |
+| AI Export/Import | Export conversation context, import preferences | Low | ✅ Complete |
 
 ### Implementation Details
 

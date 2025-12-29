@@ -93,7 +93,7 @@ export async function POST(req: Request) {
   const startOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split("T")[0]
   const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0).toISOString().split("T")[0]
 
-  const [categoriesRes, accountsRes, thisMonthTxRes, lastMonthTxRes, budgetsRes, goalsRes, billsRes] = await Promise.all([
+  const [categoriesRes, accountsRes, thisMonthTxRes, lastMonthTxRes, budgetsRes, goalsRes, billsRes, memoriesRes, learningRulesRes] = await Promise.all([
     supabaseAdmin
       .from("categories")
       .select("id, name, type")
@@ -132,6 +132,22 @@ export async function POST(req: Request) {
       .select("name, amount, next_due_date")
       .eq("user_id", session.user.id)
       .eq("is_active", true),
+    // AI Cross-Session Memory (TIER 9)
+    supabaseAdmin
+      .from("ai_memory")
+      .select("memory_type, key, value, importance")
+      .eq("user_id", session.user.id)
+      .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
+      .order("importance", { ascending: false })
+      .limit(20),
+    // AI Learning Rules (TIER 9)
+    supabaseAdmin
+      .from("ai_learning_rules")
+      .select("rule_type, pattern, action, priority")
+      .eq("user_id", session.user.id)
+      .eq("is_active", true)
+      .order("priority", { ascending: false })
+      .limit(20),
   ])
 
   const categories = categoriesRes.data || []
@@ -141,6 +157,20 @@ export async function POST(req: Request) {
   const budgets = budgetsRes.data || []
   const goals = goalsRes.data || []
   const bills = billsRes.data || []
+  const memories = memoriesRes?.data || []
+  const learningRules = learningRulesRes?.data || []
+
+  // Build AI memory context
+  const memoryContext = memories.length > 0
+    ? `\nUSER PREFERENCES & MEMORIES (from previous sessions):
+${memories.map(m => `- ${m.key}: ${typeof m.value === 'object' ? JSON.stringify(m.value) : m.value}`).join("\n")}`
+    : ""
+
+  // Build learning rules context
+  const rulesContext = learningRules.length > 0
+    ? `\nUSER-DEFINED RULES (apply these when categorizing or processing):
+${learningRules.map(r => `- When "${r.pattern}" → ${JSON.stringify(r.action)}`).join("\n")}`
+    : ""
 
   // Calculate financial snapshot
   const thisMonthExpenses = thisMonthTx.filter(t => t.amount < 0).reduce((sum, t) => sum + Math.abs(t.amount), 0)
@@ -261,6 +291,8 @@ User's available categories: ${categoryNames || "None yet"}
 User's accounts: ${accountNames || "None yet"}
 Today's date: ${new Date().toISOString().split("T")[0]}
 ${financialContext}
+${memoryContext}
+${rulesContext}
 
 ANSWERING QUESTIONS ABOUT FINANCES:
 When users ask questions like "how are my expenses looking?", "what's my spending like?", or "how am I doing financially?":

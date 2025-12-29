@@ -49,6 +49,9 @@ import {
 import { type Account } from "@/lib/validators/account"
 import { useUserPreferences } from "@/components/providers"
 import { format } from "date-fns"
+import { AISettingsPanel } from "@/components/ai-settings"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Brain } from "lucide-react"
 
 export default function AccountPage() {
   const { data: session } = useSession()
@@ -339,6 +342,22 @@ export default function AccountPage() {
               </p>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* AI Settings Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Brain className="h-5 w-5" />
+            AI Assistant Settings
+          </CardTitle>
+          <CardDescription>
+            Configure your AI assistant preferences and features
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AISettingsPanel />
         </CardContent>
       </Card>
     </div>

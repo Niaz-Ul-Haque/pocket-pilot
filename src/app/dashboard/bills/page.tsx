@@ -99,6 +99,7 @@ import {
 } from "@/components/ui/tooltip"
 import { Progress } from "@/components/ui/progress"
 import { toast } from "sonner"
+import { AIFinancialCalendar } from "@/components/ai-financial-calendar"
 
 // Bill type icon mapping
 const BILL_TYPE_ICONS: Record<BillType, React.ReactNode> = {
@@ -708,6 +709,8 @@ export default function BillsPage() {
             <BillTimeline days={30} />
           </div>
           <BillCalendar />
+          {/* AI-Powered Financial Calendar */}
+          <AIFinancialCalendar />
         </div>
       )}
 

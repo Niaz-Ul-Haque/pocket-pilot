@@ -53,6 +53,8 @@ import { cn } from "@/lib/utils"
 import { AIChatModal } from "@/components/ai-chat-modal"
 import { AIInsightsWidget } from "@/components/ai-insights-widget"
 import { DashboardSettings } from "@/components/dashboard-settings"
+import { WeeklySummaryCard } from "@/components/weekly-summary-card"
+import { AINotificationsPanel } from "@/components/ai-notifications-panel"
 import {
   SpendingTrendChart,
   CategoryBreakdownChart,
@@ -407,6 +409,12 @@ export default function DashboardPage() {
 
       {/* AI Insights Widget */}
       <AIInsightsWidget />
+
+      {/* AI Summary and Notifications */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <WeeklySummaryCard />
+        <AINotificationsPanel compact maxItems={5} />
+      </div>
 
       {/* Data Visualization Charts */}
       <div className="grid gap-6 lg:grid-cols-2">

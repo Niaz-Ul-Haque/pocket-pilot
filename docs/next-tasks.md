@@ -1,362 +1,419 @@
-# Pocket Pilot - Feature Roadmap v1.2+
+# Pocket Pilot - Feature Roadmap v1.3+
 
 This document outlines the comprehensive feature roadmap for Pocket Pilot, organized by priority tiers.
 
 ---
 
-## Recently Completed (v1.2)
+## Recently Completed
 
-### TIER 1 AI Enhancements (21 features implemented)
+### v1.3 - Complete (TIER 9 AI Features)
 
-**New API Endpoint: `/api/ai-insights`**
-- [x] Financial Health Score (0-100) with grade and breakdown
-- [x] Proactive Dashboard Insights with priority levels
-- [x] Spending Alerts (Predictive) - warns before budget exceed
-- [x] Anomaly Detection - flags unusual transactions
-- [x] Spending Pattern Analysis - day-of-week/time-of-month patterns
-- [x] Subscription Audit - recurring charges with annual cost estimates
-- [x] Duplicate Transaction Detection
-- [x] Expense Predictions - weekly/monthly projections
-- [x] Cash Flow Forecasting - 30-day balance prediction
-- [x] Goal Achievement Predictions - ETAs and required contributions
-- [x] Bill Impact Analysis - upcoming bill effects on balance
+**TIER 9: Advanced AI Capabilities** - 11/12 Complete (1 Parked)
+- Weekly AI Summary widget with auto-generation
+- Monthly AI Report with PDF export capability
+- AI Chat Memory (Cross-Session) with persistent preferences
+- Proactive AI Notifications (budget warnings, bill reminders, savings opportunities)
+- Smart Merchant Recognition with pattern matching (AMZN = Amazon, etc.)
+- AI-Powered Natural Language Search ("show me coffee last month")
+- Spending Prediction Accuracy Tracking with learning from corrections
+- AI Financial Calendar with optimal payment scheduling
+- AI Voice Commands with speech synthesis integration
+- AI Learning Mode (teach AI via conversation)
+- AI Export/Import for preferences and data
+- Parked: Receipt OCR
 
-**New AI Chat Tools (8 tools added):**
-- [x] `smart_categorize` - suggests categories for transactions
-- [x] `what_if_scenario` - financial projections ("What if I cut dining by 50%?")
-- [x] `get_report` - natural language financial reports
-- [x] `compare_periods` - period-over-period comparison
-- [x] `find_savings_opportunities` - identifies areas to save
-- [x] `get_bill_negotiation_tips` - bill reduction tips
-- [x] `check_unused_budgets` - underutilized budget alerts
-- [x] `track_financial_habits` - positive/negative habit tracking
+### v1.2 - Complete (100+ Features Across 8 Tiers)
 
-**New Dashboard Widget:**
-- [x] `AIInsightsWidget` - tabbed display (Overview, Predictions, Patterns, Alerts)
+**TIER 8: AI Core Improvements** - 8/8 Complete
+- AI Confirmation Acknowledgement Fix
+- AI Tool Error Recovery (better error messages with retry suggestions)
+- AI Context Memory (within session - remembers preferences)
+- Quick Reply Suggestions (Yes/No/Edit buttons after AI questions)
+- AI Response Improvements (financial context included)
+- AI Fallback Responses (graceful handling when unsure)
+- AI Request Validation (confirms before destructive/large actions)
+- AI Multi-Step Action Support (handles complex multi-tool requests)
+- Bug Fix: Chat history title truncation
+- Bug Fix: AI expense query responses
 
-**Parked (for future implementation):**
-- [ ] Weekly AI Summary
-- [ ] Monthly AI Report
+**TIER 0: DevOps & Automation** - 11/11 Complete
+- GitHub Actions CI/CD (build, lint, type check, test)
+- Security scanning (npm audit, CodeQL)
+- Vercel preview/production deployments
+- Dependabot automated updates
+- Bundle size tracking
+- PR auto-labeling
+- Release automation
+- Git hooks (Husky + lint-staged + commitlint)
+- Issue/PR templates
 
----
+**TIER 1: AI Enhancements** - 21/23 Complete (2 Parked)
+- Financial Health Score (0-100)
+- AI Insights Widget (4 tabs: Overview, Predictions, Patterns, Alerts)
+- Anomaly Detection, Spending Pattern Analysis
+- Cash Flow Forecasting, Goal Predictions
+- 8 New AI Chat Tools (smart_categorize, what_if_scenario, get_report, compare_periods, find_savings_opportunities, get_bill_negotiation_tips, check_unused_budgets, track_financial_habits)
+- Parked: Weekly AI Summary, Monthly AI Report
 
-## Previously Completed (v1.1)
+**TIER 2: Data Visualization** - 15/15 Complete
+- All chart types: spending trends, category breakdown, income vs expense, net worth, daily sparklines
+- Budget visualizations: gauges, comparison, heatmap
+- Goal visualizations: timeline, contribution chart
+- Bill visualizations: calendar, summary, timeline
+- Advanced: cash flow waterfall, category trends
 
-- [x] Data export (CSV/JSON) with download functionality
-- [x] Enhanced AI Tools: `get_spending_trends`, `get_forecast`, `get_suggestions`
-- [x] Recurring Transactions: Full CRUD with auto-generation endpoint
-- [x] Voice Input: Speech-to-text for AI chat (Web Speech API)
-- [x] Voice Output: Text-to-speech for AI responses with auto-speak toggle
-- [x] Transactions Pagination: Server-side (25 items/page) with filtering
-- [x] Tags System: User-defined tags with colors, filtering, management UI
-- [x] Transfer Linking: Paired transactions between accounts
-- [x] Budget Rollover: Unused budget carries to next month
-- [x] Notification Bell: Aggregated alerts for bills + budgets
-- [x] Custom Hooks: `useApiQuery`, `useApiMutation`, `useFormErrors`
-- [x] Error Handling: Standardized API error responses
+**TIER 3: UX Improvements** - 12/12 Complete
+- Keyboard shortcuts, Command palette (Cmd+K)
+- Quick Add FAB, Global search
+- Dark mode, Dashboard customization
+- Undo/redo, Recent actions history
+- Onboarding tour, Mobile PWA improvements
 
-**v1.1 is COMPLETE!**
+**TIER 4: Transaction Power Features** - 10/10 Complete
+- Multi-select, Bulk operations (delete, categorize, tag)
+- Auto-categorization rules with management UI
+- Split transactions, Transaction templates, Transaction linking
 
----
+**TIER 5: Budgeting Enhancements** - 8/8 Complete
+- Budget templates (50/30/20, Envelope, Zero-Based)
+- Annual budgets, Budget copy forward
+- Flexible periods, Budget notes, Custom alert thresholds
 
-## TIER 0: DevOps & Automation (TOP PRIORITY)
+**TIER 6: Goals & Bills Enhancements** - 8/8 Complete
+- Goal categories, milestones, auto-contribute, sharing
+- Bill auto-detection, categories, annual cost calculator, payment streaks
 
-### GitHub Actions CI/CD
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Build Workflow | Run `npm run build` on every PR and push to main | Complete |
-| Lint Workflow | Run `npm run lint` on every PR | Complete |
-| Type Check Workflow | Run `npx tsc --noEmit` for TypeScript validation | Complete |
-| Test Workflow | Run Jest tests on every PR (ready for when tests exist) | Complete |
-| Deploy Preview | Auto-deploy PR previews to Vercel for review | Complete |
-| Production Deploy (Manual Trigger) | Deploy to production via comment `/deploy to production via master` | Complete |
-| Dependabot | Automated dependency security PRs | Complete |
-| Security Scanning | npm audit + CodeQL for vulnerability detection | Complete |
-| Bundle Size Check | Track and report bundle size changes on PRs | Complete |
-| Auto PR Labeling | Label PRs based on changed files (frontend, api, docs) | Complete |
-| Release Automation | Auto-generate changelog and GitHub releases on version tags | Complete |
-
-#### Production Deployment Flow
-
-1. **PR Merged to Master** → CI/CD runs automatically (build, lint, type check, tests)
-2. **CI/CD Passes** → All checks green, code is validated
-3. **Manual Trigger** → Comment `/deploy to production via master` on the merge commit
-4. **Deployment Workflow** → Triggered by comment, deploys to production
-
-This ensures production deployments are intentional and only happen after explicit approval.
-
-### Git Hooks (Husky + lint-staged)
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Pre-commit Hook | Run lint-staged (lint + format only staged files) | Complete |
-| Commit-msg Hook | Enforce Conventional Commits format (feat:, fix:, chore:) | Complete |
-| Pre-push Hook | Run build and type check before pushing | Complete |
-| Post-merge Hook | Auto-run `npm install` when package.json changes | Complete |
-| Prepare-commit-msg | Auto-add issue number from branch name to commit | Complete |
-
-### Additional DevOps
-
-- [x] Install and configure Husky
-- [x] Configure lint-staged for faster pre-commit checks
-- [x] Set up commitlint for commit message validation
-- [x] Create GitHub issue templates (bug report, feature request)
-- [x] Create GitHub PR template with review checklist
+**TIER 7: Reports & Analytics** - 8/8 Complete
+- Custom date range, Year-over-year, Merchant spending
+- Category deep dive, Savings rate dashboard
+- Monthly summary, PDF export, Tax summary
 
 ---
 
-## TIER 1: AI Enhancements (23 Features)
+## v1.1 Legacy (Complete)
 
-**v1.2 Status: 21/23 Complete (2 Parked)**
-
-### Proactive Intelligence
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Financial Health Score | AI-calculated score (0-100) based on budget adherence, savings rate, bill payment timeliness, goal progress | ✅ Complete |
-| Weekly AI Summary | Dashboard widget with AI-generated weekly financial summary | 🔒 Parked |
-| Monthly AI Report | Comprehensive month-end analysis with insights and recommendations | 🔒 Parked |
-| Proactive Dashboard Insights | AI-generated tips that update based on real-time data | ✅ Complete |
-| Spending Alerts (Predictive) | AI warns when you're on track to overspend before hitting the limit | ✅ Complete |
-
-### Anomaly & Pattern Detection
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Anomaly Detection | Flag transactions significantly higher than normal for a category | ✅ Complete |
-| Spending Pattern Analysis | Identify day-of-week and time-of-month patterns | ✅ Complete |
-| Subscription Audit | AI identifies all recurring charges, estimates annual cost, suggests cancellations | ✅ Complete |
-| Duplicate Transaction Detection | AI identifies potential duplicate entries | ✅ Complete |
-
-### Predictions & Forecasting
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Expense Predictions | "Based on patterns, you'll spend ~$X on groceries this week" | ✅ Complete |
-| Cash Flow Forecasting | Predict future balance based on recurring transactions, bills, patterns | ✅ Complete |
-| Goal Achievement Predictions | ETA for each goal based on contribution patterns | ✅ Complete |
-| Bill Impact Analysis | Show how upcoming bills will affect your balance | ✅ Complete |
-
-### Smart Assistance
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Smart Categorization | AI suggests categories for uncategorized/new transactions | ✅ Complete |
-| Merchant Recognition & Learning | AI learns merchant → category mappings from user behavior | ✅ Complete (via smart_categorize) |
-| Category Recommendations | AI suggests new categories based on spending patterns | ✅ Complete (via smart_categorize) |
-| Savings Opportunity Finder | AI identifies specific areas where you could save | ✅ Complete |
-
-### Interactive AI Features
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| "What If" Scenarios | Ask "What if I cut dining out by 50%?" and get projections | ✅ Complete |
-| Natural Language Reports | Ask "Show me my spending for December" and get formatted response | ✅ Complete |
-| Comparative Insights | "How does this month compare to last month?" with detailed breakdown | ✅ Complete |
-| Bill Negotiation Tips | Based on bill amounts, suggest which ones might be negotiable | ✅ Complete |
-| Unused Budget Alerts | Notice when consistently under-utilizing a budget (reallocation opportunity) | ✅ Complete |
-| Financial Habit Tracker | Track positive behaviors (saved money, stayed under budget) vs negative | ✅ Complete |
+- Data export (CSV/JSON)
+- Enhanced AI Tools (get_spending_trends, get_forecast, get_suggestions)
+- Recurring Transactions with auto-generation
+- Voice I/O (speech-to-text, text-to-speech)
+- Transactions pagination (server-side, 25/page)
+- Tags system with colors and filtering
+- Transfer linking, Budget rollover
+- Notification bell, Custom hooks, Standardized errors
 
 ---
 
-## TIER 2: Data Visualization (15 Features)
+## v1.3+ Roadmap - AI-Focused Expansion
 
-### Dashboard Charts
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Spending Trend Line Chart | Monthly/weekly spending over time (last 6-12 months) | Pending |
-| Category Breakdown Donut Chart | Where money is going this month | Pending |
-| Income vs Expense Bar Chart | Side-by-side monthly comparison | Pending |
-| Net Worth Over Time | Historical line chart tracking total assets - liabilities | Pending |
-| Daily Spending Sparklines | Mini charts showing daily spending in transaction list | Pending |
-
-### Budget Visualizations
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Budget Gauge Charts | Circular gauges showing budget utilization percentage | Pending |
-| Budget Comparison Chart | This month vs last month by category | Pending |
-| Budget History Heatmap | Calendar showing which days had heavy spending | Pending |
-
-### Goal Visualizations
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Goal Progress Timeline | Visual timeline showing projected completion date | Pending |
-| Goal Contribution Chart | Bar chart of contributions over time | Pending |
-
-### Bill Visualizations
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Bill Calendar View | Full calendar with bill due dates marked | Pending |
-| Monthly Bills Summary | Pie chart of recurring costs breakdown | Pending |
-| Bill Payment Timeline | Upcoming bills on a timeline | Pending |
-
-### Advanced Charts
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Cash Flow Waterfall | Income → expenses → categories → net visualization | Pending |
-| Category Trends Comparison | Multi-line chart comparing categories over time | Pending |
+### Priority Focus
+Based on user requirements, v1.3 focuses on **making AI more robust and beneficial**. All new tiers prioritize AI enhancements, reliability, and user experience.
 
 ---
 
-## TIER 3: UX Improvements (12 Features)
+## TIER 8: AI Core Improvements (Bug Fixes & Reliability)
 
-### Navigation & Speed
+**Priority: CRITICAL - Implement First**
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Keyboard Shortcuts | Power user shortcuts (N=new transaction, G+T=go to transactions) | Pending |
-| Command Palette | Cmd/Ctrl+K to search and execute any action | Pending |
-| Quick Add FAB | Floating action button for instant transaction entry | Pending |
-| Global Search | Search across all entities (transactions, bills, goals, categories) | Pending |
+| Feature | Description | Priority | Status |
+|---------|-------------|----------|--------|
+| AI Confirmation Acknowledgement Fix | Fix: AI should respond "Done!" after user confirms and action executes | Critical | ✅ Complete |
+| AI Tool Error Recovery | Better error messages when tools fail, with retry suggestions | High | ✅ Complete |
+| AI Context Memory (Within Session) | Remember user preferences mentioned in conversation | High | ✅ Complete |
+| Quick Reply Suggestions | Contextual reply buttons (Yes/No/Edit details) after AI questions | High | ✅ Complete |
+| AI Response Streaming Improvements | Faster, smoother response streaming | Medium | ✅ Complete (via financial context) |
+| AI Fallback Responses | Graceful handling when AI is unsure or can't complete | Medium | ✅ Complete |
+| AI Request Validation | Validate user intent before executing destructive actions (deletes) | Medium | ✅ Complete |
+| AI Multi-Step Action Support | Handle complex requests requiring multiple tool calls | Low | ✅ Complete |
 
-### Personalization
+Bug Fixes (TIER 8) - ✅ All Complete:
+1. ✅ Chat history title truncation - titles now show "..." after 20 characters, delete icon always visible
+2. ✅ AI expense query responses - financial snapshot included in system prompt for context
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Dark Mode Toggle | Manual light/dark theme switching with system preference option | Pending |
-| Dashboard Customization | Drag-and-drop to rearrange, show/hide widgets | Pending |
-| Default Account Setting | Set preferred default account for new transactions | Pending |
+### Implementation Details (Completed)
 
-### Convenience
+**AI Confirmation Bug Fix (✅ Complete):**
+- Strengthened system prompt with explicit post-tool response requirements
+- Added examples of correct vs wrong behavior
+- AI now must respond with "Done!" after tool execution
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Undo/Redo Actions | Undo accidental deletions with toast notification | Pending |
-| Recent Actions History | View and potentially revert recent changes | Pending |
-| Favorites/Pinned Items | Pin important transactions, goals, or bills for quick access | Pending |
-| Mobile PWA Improvements | Better touch targets, swipe actions, offline support | Pending |
-| Onboarding Improvements | Better first-time user flow with guided tour | Pending |
+**Quick Reply Suggestions (✅ Complete):**
+- Added contextual buttons after AI questions
+- "Yes, add it" / "No, cancel" / "Edit details" for confirmation questions
+- "Yes" / "No" / "Tell me more" for general questions
+- Visual styling with green/red colors for Yes/No actions
 
----
+**Financial Context (✅ Complete):**
+- AI now receives full financial snapshot in system prompt
+- Includes: account balances, this month spending, last month comparison
+- Budget status, goals progress, upcoming bills
+- AI can answer "how are my expenses?" without tool calls
 
-## TIER 4: Transaction Power Features (10 Features)
+**Error Recovery & Fallback (✅ Complete):**
+- Added explicit error handling instructions to system prompt
+- Common error patterns with user-friendly responses
+- Fallback responses when AI is unsure
 
-### Bulk Operations
+**Request Validation (✅ Complete):**
+- Large amounts over $500 trigger confirmation
+- Destructive actions require explicit confirmation
+- Recurring transactions get additional confirmation
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Multi-Select Transactions | Checkbox selection for multiple transactions | Pending |
-| Bulk Delete | Delete multiple selected transactions at once | Pending |
-| Bulk Edit Category | Change category for multiple transactions | Pending |
-| Bulk Add Tags | Add tags to multiple transactions at once | Pending |
-
-### Automation
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Auto-Categorization Rules | Define rules like "Description contains 'UBER' → Transportation" | Pending |
-| Rule Management UI | Create, edit, delete categorization rules | Pending |
-| Apply Rules to Existing | Run rules against historical transactions | Pending |
-
-### Advanced Features
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Split Transactions | Divide one transaction across multiple categories | Pending |
-| Transaction Templates | Save common transactions for one-click entry | Pending |
-| Transaction Linking | Link related transactions beyond transfers (e.g., refunds) | Pending |
+**Multi-Step Actions (✅ Complete):**
+- System prompt includes multi-step request handling
+- AI breaks down complex requests step-by-step
+- Progress reporting and summary at end
 
 ---
 
-## TIER 5: Budgeting Enhancements (8 Features)
+## TIER 9: Advanced AI Capabilities
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Budget Templates | Pre-built configurations (50/30/20, envelope method, zero-based) | Pending |
-| Apply Template | One-click apply a budget template | Pending |
-| Annual Budgets | Set yearly budgets alongside monthly | Pending |
-| Budget vs Actual Report | Historical comparison of budgeted vs spent | Pending |
-| Budget Copy Forward | Clone last month's budgets with one click | Pending |
-| Flexible Budget Periods | Weekly or bi-weekly budgets option | Pending |
-| Budget Notes | Add notes/reminders to budget categories | Pending |
-| Budget Alerts Customization | Custom threshold percentages for alerts | Pending |
+**Priority: HIGH - Complete**
 
----
+| Feature | Description | Priority | Status |
+|---------|-------------|----------|--------|
+| Weekly AI Summary | Auto-generated weekly financial digest widget (PARKED from v1.2) | High | ✅ Complete |
+| Monthly AI Report | Comprehensive month-end analysis with PDF export (PARKED from v1.2) | High | ✅ Complete |
+| Receipt OCR | Scan receipts to auto-fill transactions (spec at docs/receipt-ocr-spec.md) | High | 🔴 Parked |
+| AI Chat Memory (Cross-Session) | Remember user context across conversations | Medium | ✅ Complete |
+| Proactive AI Notifications | AI initiates alerts/suggestions without user prompting | Medium | ✅ Complete |
+| Smart Merchant Recognition | AI learns merchant name variations (AMZN = Amazon, UBER* = Uber) | Medium | ✅ Complete |
+| AI-Powered Natural Language Search | "Show me coffee purchases last month" in search bar | Medium | ✅ Complete |
+| Spending Prediction Accuracy Tracking | AI learns from corrections to improve future predictions | Medium | ✅ Complete |
+| AI Financial Calendar | AI suggests optimal payment timing for bills | Low | ✅ Complete |
+| AI Voice Commands | Full voice-controlled transaction entry without typing | Low | ✅ Complete |
+| AI Learning Mode | User can teach AI custom categorization rules via conversation | Low | ✅ Complete |
+| AI Export/Import | Export conversation context, import preferences | Low | ✅ Complete |
 
-## TIER 6: Goals & Bills Enhancements (8 Features)
+### Implementation Details
 
-### Goals
+**Weekly AI Summary:**
+- New API endpoint: `POST /api/ai-summary?type=weekly`
+- Component: `WeeklyAISummaryCard` on dashboard
+- Auto-generates on Monday mornings
+- Content: spending recap, budget status, upcoming bills, goal progress, AI insights
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Goal Categories | Organize goals into types (Emergency, Vacation, Education) | Pending |
-| Goal Milestones | Sub-goals within a larger goal with mini-celebrations | Pending |
-| Goal Auto-Contribute | Set automatic monthly contribution amounts | Pending |
-| Goal Sharing | Generate shareable progress link (read-only) | Pending |
+**Monthly AI Report:**
+- New API endpoint: `POST /api/ai-summary?type=monthly`
+- Component: `MonthlyReportModal` with PDF generation
+- Available first week of each month
+- Content: comprehensive month analysis, charts, comparisons, recommendations
 
-### Bills
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Bill Auto-Detection | AI suggests new bills based on transaction patterns | Pending |
-| Bill Categories | Organize bills (Utilities, Subscriptions, Insurance) | Pending |
-| Annual Bill Cost Calculator | Show total yearly cost of all bills | Pending |
-| Bill Payment Streak | Track consecutive on-time payments | Pending |
-
----
-
-## TIER 7: Reports & Analytics (8 Features)
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Custom Date Range Reports | Select any start/end date for analysis | Pending |
-| Year-Over-Year Report | Compare any two years side by side | Pending |
-| Merchant Spending Report | Transactions grouped by merchant name | Pending |
-| Category Deep Dive | Single category analysis with trends, averages, anomalies | Pending |
-| Savings Rate Dashboard | (Income - Expenses) / Income visualization | Pending |
-| Monthly Summary Page | Dedicated page for comprehensive monthly view | Pending |
-| PDF Report Export | Generate downloadable PDF reports | Pending |
-| Tax Summary Enhancements | Better formatting, more tax categories, export | Pending |
+**Receipt OCR:**
+- Use vision AI model (GPT-4V or Claude Vision)
+- New API endpoint: `POST /api/receipts/scan`
+- Component: `ReceiptScanner` with camera/file upload
+- Extract: date, merchant, amount, items
+- Auto-fill transaction form with extracted data
 
 ---
 
-## Future Considerations (v2+)
+## TIER 10: AI-Assisted Automation
 
-| Feature | Description | Notes |
-|---------|-------------|-------|
-| Receipt OCR | Scan receipts to auto-fill transactions | Spec exists at docs/receipt-ocr-spec.md |
-| Multi-Currency | Support for multiple currencies | Currently CAD only |
-| Multi-User/Household | Share finances with family members | Out of MVP scope |
-| Investment Tracking | Advanced portfolio tracking | Beyond basic tags |
-| Open Banking | Opt-in Plaid/Flinks integration | Manual-first philosophy |
-| Mobile PWA | Optimized PWA with offline support | Progressive enhancement |
-| Email Notifications | Bill reminders via email | Out of current scope |
+| Feature | Description | Priority | Status |
+|---------|-------------|----------|--------|
+| Smart Auto-Categorization V2 | AI learns from user corrections in real-time | High | Pending |
+| Bill Detection Improvements | Better recurring pattern detection from transactions | High | Pending |
+| Subscription Cancellation Helper | AI guides user through cancellation process for detected subscriptions | Medium | Pending |
+| Bill Negotiation Assistant | AI provides customized scripts for negotiating specific bills | Medium | Pending |
+| Budget Adjustment Recommendations | AI suggests budget changes based on spending patterns | Medium | Pending |
+| Goal Auto-Adjust | AI recommends goal contribution adjustments based on cash flow | Low | Pending |
+| Expense Prediction Alerts | Proactive AI warnings before big predicted expenses | Low | Pending |
+| Financial Health Coaching | AI provides ongoing personalized financial guidance | Low | Pending |
+
+### Implementation Details
+
+**Smart Auto-Categorization V2:**
+- Track user corrections to AI categorizations
+- Store in `ai_learning` table: `{user_id, merchant_pattern, suggested_category, corrected_category, count}`
+- After 3+ corrections, prioritize user's preference
+- Integrate into `smart_categorize` tool
 
 ---
 
-## Known Limitations
+## TIER 11: AI Chat UX Enhancements
 
-- **Currency**: CAD only (no multi-currency support)
-- **Users**: Single user only (no household sharing)
-- **Bank Sync**: Manual entry only (no Plaid/Flinks integration)
-- **Notifications**: In-app only (no email/push)
-- **Investments**: Tag-based tracking only (no advanced features)
+| Feature | Description | Priority | Status |
+|---------|-------------|----------|--------|
+| Conversation Templates | Pre-built prompts for common tasks (add expense, check budget, etc.) | High | Pending |
+| AI Typing Indicator | Better visual feedback during AI response generation | Medium | Pending |
+| Message Reactions | Thumbs up/down on AI messages for feedback | Medium | Pending |
+| AI Response Formatting | Better markdown rendering with tables, charts inline | Medium | Pending |
+| Conversation Search | Search through past AI conversations | Medium | Pending |
+| AI Response Speed Setting | Fast (shorter) vs Detailed (longer) response toggle | Low | Pending |
+| Multi-Language Support | AI responds in user's preferred language | Low | Pending |
+| Conversation Pinning | Pin important conversations for quick access | Low | Pending |
+| AI Personality Settings | Formal vs Casual AI communication style toggle | Low | Pending |
+| Chat Export | Export conversation history as text/PDF | Low | Pending |
+
+### Implementation Details
+
+**Conversation Templates:**
+- Floating template selector in chat
+- Templates: "Add an expense", "Check my budget", "How much did I spend on X?", "Add to savings goal", "Upcoming bills"
+- Clicking template pre-fills message input
+
+---
+
+## TIER 12: Smart Savings & AI Integration
+
+| Feature | Description | Priority | Status |
+|---------|-------------|----------|--------|
+| Round-Up Savings with AI Tracking | AI tracks and reports round-up savings progress | Medium | Pending |
+| AI Savings Challenges | AI generates personalized saving challenges ("No-spend weekend") | Medium | Pending |
+| AI Savings Coach | Personalized savings tips based on spending analysis | Medium | Pending |
+| Smart Goal Suggestions | AI suggests savings goals based on spending patterns | Low | Pending |
+| AI Celebration Messages | AI celebrates milestones and achievements in chat | Low | Pending |
+| Financial Streak Tracking | AI tracks consecutive days of positive financial behavior | Low | Pending |
+
+---
+
+## TIER 13: Security & Trust (Future - Freemium Potential)
+
+| Feature | Description | Priority | Notes |
+|---------|-------------|----------|-------|
+| Two-Factor Authentication (2FA) | TOTP/Authenticator app support | Medium | User trust |
+| Session Management | View and revoke active sessions | Medium | Security |
+| Activity Audit Log | View all account actions with timestamps | Low | Transparency |
+| Data Export & Deletion | GDPR-compliant data management | Low | Compliance |
+| Privacy Dashboard | See exactly what data is stored | Low | Trust |
+| API Rate Limiting | Prevent abuse of AI features | Low | Protection |
+
+---
+
+## TIER 14: Gamification & Engagement (Future)
+
+| Feature | Description | Priority | Notes |
+|---------|-------------|----------|-------|
+| Achievement Badges | Unlock badges for financial milestones | Low | Engagement |
+| Financial Streaks | Track consecutive on-budget days | Low | Motivation |
+| Weekly Challenges | Personal challenges from AI | Low | Gamification |
+| Progress Levels | Level up your financial health | Low | Fun |
+| Milestone Celebrations | Confetti/animations for achievements | Low | Delight |
+| Year in Review | Annual financial recap summary | Low | Engagement |
+| Points System | Earn points for good financial behavior | Low | Incentive |
+| Daily Check-in | Incentivize daily app usage | Low | Retention |
+
+---
+
+## TIER 15: Mobile & PWA Enhancements (Future)
+
+| Feature | Description | Priority | Notes |
+|---------|-------------|----------|-------|
+| Offline Mode | Full offline functionality with sync | Medium | PWA |
+| Push Notifications | Bill reminders, budget alerts via browser | Medium | Engagement |
+| Quick Actions Widget | iOS/Android home screen widget | Low | Convenience |
+| Swipe Actions | Swipe to delete, categorize transactions | Low | Mobile UX |
+| Share Sheet Integration | Add transactions from other apps | Low | Integration |
+
+---
+
+## Bug Fixes & Technical Improvements
+
+| Issue | Description | Priority | Status |
+|-------|-------------|----------|--------|
+| AI Confirmation Bug | AI doesn't acknowledge after user confirms action | Critical | ✅ Complete |
+| Long Conversation Memory | AI loses context in very long conversations | Medium | Pending |
+| Chart Performance | Memory leaks in charts with large data | Low | Pending |
+| Mobile Chat UX | Chat modal hard to use on small screens | Low | Pending |
+| Accessibility | Add ARIA labels to AI chat components | Low | Pending |
+
+---
+
+## Implementation Priority Order
+
+### Phase 1: Critical Fixes (Do First)
+1. AI Confirmation Acknowledgement Fix
+2. Quick Reply Suggestions (Yes/No buttons)
+3. AI Tool Error Recovery
+
+### Phase 2: Complete Parked Features
+4. Weekly AI Summary widget
+5. Monthly AI Report
+
+### Phase 3: AI Reliability
+6. AI Context Memory (Within Session)
+7. AI Fallback Responses
+8. AI Request Validation
+9. Conversation Templates
+
+### Phase 4: Advanced AI
+10. Receipt OCR
+11. Smart Merchant Recognition
+12. Proactive AI Notifications
+13. AI-Powered Natural Language Search
+
+### Phase 5: AI UX Polish
+14. AI Response Formatting
+15. Message Reactions
+16. Conversation Search
+
+### Future Phases
+- Security & Trust features (potential freemium)
+- Gamification features
+- Mobile PWA enhancements
+
+---
+
+## Freemium Consideration (Future)
+
+User mentioned potential Stripe integration with AI features behind subscription:
+
+**Free Tier:**
+- Basic AI chat (limited messages/day)
+- Basic categorization
+- Core financial tracking (accounts, transactions, budgets, goals, bills)
+- Basic charts and reports
+
+**Premium Tier (Future):**
+- Unlimited AI chat
+- Receipt OCR scanning
+- Advanced AI insights and predictions
+- Proactive AI notifications
+- AI summaries and reports
+- Cross-session AI memory
+- Priority support
+
+---
+
+## Known Limitations (Current)
+
+- **Currency:** CAD only (no multi-currency support)
+- **Users:** Single user only (no household sharing)
+- **Bank Sync:** Manual entry only (no Plaid/Flinks integration)
+- **Notifications:** In-app only (no email/push)
+- **Investments:** No dedicated tracking (use transactions with investment category)
 
 ---
 
 ## Development Workflow
 
-**IMPORTANT**: After implementing any feature:
+**IMPORTANT:** After implementing any feature:
 
 1. Run `npm run build` - must pass without errors
-2. Run `npm run lint` - must pass without errors
+2. Run `npx eslint src` - must pass without errors
 3. Update relevant documentation
 4. Mark feature as complete in this file
 5. Only proceed to next task after build + lint pass
 
 ---
 
-## Implementation Notes
+## Documentation Updates Required
 
-- All charts use **Recharts** (already installed)
-- AI features use existing **AI SDK** infrastructure
-- Follow existing patterns in codebase
-- Each feature should be a discrete, shippable unit
-- Use Zod for all validation (client + server)
-- Apply RLS policies to any new tables
+When implementing new features, update:
+- `docs/spec.md` - If new requirements
+- `docs/architecture.md` - If new patterns/endpoints
+- `docs/data-model.md` - If new database tables
+- `docs/decision-log.md` - If architectural decisions
+- `docs/PROGRESS.md` - Mark completion status
+- `README.md` - If user-facing changes
+
+---
+
+## Notes
+
+- Focus on making AI genuinely useful, not gimmicky
+- Equal priority for mobile and desktop
+- No investment tracking (users can use transactions)
+- Personal/free project for now
+- Keep freemium structure in mind for future monetization
+- If any SQL supabase needs to be udpated/amended/added/deleted, etc, please give em the sql commans under supabase/migrations so I can go and run them in SQL Editor in supabase web console.

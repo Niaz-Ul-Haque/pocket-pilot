@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { supabaseAdmin } from "@/lib/supabase"
 import { transactionSchema, formToDbAmount } from "@/lib/validators/transaction"
+import { testRule, type RuleType } from "@/lib/validators/categorization-rule"
 
 /**
  * GET /api/transactions
@@ -161,6 +162,8 @@ export async function POST(request: Request) {
   }
 
   // Verify category belongs to user (if provided)
+  let finalCategoryId = category_id || null
+
   if (category_id) {
     const { data: category, error: categoryError } = await supabaseAdmin
       .from("categories")
@@ -174,6 +177,63 @@ export async function POST(request: Request) {
     }
   }
 
+  // Auto-categorize if no category provided and description exists
+  if (!finalCategoryId && description) {
+    // First, try categorization rules (from auto-categorization page)
+    const { data: rules } = await supabaseAdmin
+      .from("categorization_rules")
+      .select("id, rule_type, pattern, case_sensitive, target_category_id")
+      .eq("user_id", session.user.id)
+      .eq("is_active", true)
+      .order("rule_order", { ascending: true })
+
+    if (rules) {
+      for (const rule of rules) {
+        if (testRule(description, rule.rule_type as RuleType, rule.pattern, rule.case_sensitive)) {
+          finalCategoryId = rule.target_category_id
+          break
+        }
+      }
+    }
+
+    // If still no category, try AI learning rules
+    if (!finalCategoryId) {
+      const { data: aiRules } = await supabaseAdmin
+        .from("ai_learning_rules")
+        .select("id, rule_type, pattern, action")
+        .eq("user_id", session.user.id)
+        .eq("is_active", true)
+        .eq("rule_type", "categorization")
+        .order("priority", { ascending: false })
+
+      if (aiRules) {
+        for (const rule of aiRules) {
+          // AI learning rules use 'contains' matching by default
+          const lowerDesc = description.toLowerCase()
+          const lowerPattern = (rule.pattern || "").toLowerCase()
+
+          if (lowerDesc.includes(lowerPattern)) {
+            // Get category by name from action
+            const categoryName = rule.action?.category_name
+            if (categoryName) {
+              const { data: category } = await supabaseAdmin
+                .from("categories")
+                .select("id")
+                .eq("user_id", session.user.id)
+                .ilike("name", categoryName)
+                .single()
+
+              if (category) {
+                finalCategoryId = category.id
+                break
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   // Convert form amount to signed database amount
   const dbAmount = formToDbAmount(amount, type)
 
@@ -182,7 +242,7 @@ export async function POST(request: Request) {
     .insert({
       user_id: session.user.id,
       account_id,
-      category_id: category_id || null,
+      category_id: finalCategoryId,
       date,
       amount: dbAmount,
       description: description || null,

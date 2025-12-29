@@ -1,7 +1,20 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { supabaseAdmin } from "@/lib/supabase"
-import { billSchema, calculateBillStatus } from "@/lib/validators/bill"
+import { billSchema, calculateBillStatus, type Bill, type BillType } from "@/lib/validators/bill"
+
+// Helper function to parse bill data
+function parseBillData(data: Record<string, unknown>): Bill {
+  return {
+    ...data,
+    amount: data.amount ? parseFloat(data.amount as string) : null,
+    bill_type: (data.bill_type as BillType) || "other",
+    current_streak: (data.current_streak as number) || 0,
+    longest_streak: (data.longest_streak as number) || 0,
+    total_payments: (data.total_payments as number) || 0,
+    on_time_payments: (data.on_time_payments as number) || 0,
+  } as Bill
+}
 
 // GET /api/bills - List all bills for the current user
 export async function GET(request: Request) {
@@ -16,6 +29,7 @@ export async function GET(request: Request) {
     const activeOnly = activeParam === "true" // Only filter if explicitly set to "true"
     const upcoming = searchParams.get("upcoming") === "true"
     const days = parseInt(searchParams.get("days") || "30", 10)
+    const billType = searchParams.get("bill_type")
 
     let query = supabaseAdmin
       .from("bills")
@@ -28,6 +42,10 @@ export async function GET(request: Request) {
 
     if (activeOnly) {
       query = query.eq("is_active", true)
+    }
+
+    if (billType) {
+      query = query.eq("bill_type", billType)
     }
 
     if (upcoming) {
@@ -49,14 +67,13 @@ export async function GET(request: Request) {
 
     // Transform and add status
     const billsWithStatus = (data ?? []).map((bill) => {
-      const billData = {
+      const billData = parseBillData({
         ...bill,
-        amount: bill.amount ? parseFloat(bill.amount) : null,
         category_name: bill.categories?.name ?? null,
-      }
+      })
       // Remove the nested categories object
-      const { categories, ...rest } = billData
-      return calculateBillStatus(rest)
+      const { categories, ...rest } = billData as Record<string, unknown>
+      return calculateBillStatus(rest as Bill)
     })
 
     return NextResponse.json(billsWithStatus)
@@ -87,7 +104,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const { name, amount, frequency, next_due_date, category_id, auto_pay, notes } =
+    const { name, amount, frequency, next_due_date, category_id, bill_type, auto_pay, notes } =
       validation.data
 
     const { data, error } = await supabaseAdmin
@@ -99,6 +116,7 @@ export async function POST(request: Request) {
         frequency,
         next_due_date,
         category_id: category_id ?? null,
+        bill_type: bill_type || "other",
         auto_pay: auto_pay ?? false,
         notes: notes ?? null,
       })
@@ -117,14 +135,13 @@ export async function POST(request: Request) {
     }
 
     // Transform and add status
-    const billData = {
+    const billData = parseBillData({
       ...data,
-      amount: data.amount ? parseFloat(data.amount) : null,
       category_name: data.categories?.name ?? null,
-    }
-    const { categories, ...rest } = billData
+    })
+    const { categories, ...rest } = billData as Record<string, unknown>
 
-    return NextResponse.json(calculateBillStatus(rest), { status: 201 })
+    return NextResponse.json(calculateBillStatus(rest as Bill), { status: 201 })
   } catch (error) {
     console.error("Error in POST /api/bills:", error)
     return NextResponse.json(

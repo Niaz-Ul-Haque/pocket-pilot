@@ -106,6 +106,13 @@ Track story completion status. This file reflects the actual implementation stat
 | public.tags | ✅ | ✅ | 011_tags.sql | User-defined transaction tags |
 | public.transaction_tags | ✅ | ✅ | 011_tags.sql | Junction table for tag assignments |
 | public.recurring_transactions | ✅ | ✅ | 012_recurring_transactions.sql | Recurring transaction templates |
+| public.ai_memory | ✅ | ✅ | 016_tier9_ai_features.sql | Cross-session AI memory storage |
+| public.merchant_mappings | ✅ | ✅ | 016_tier9_ai_features.sql | Smart merchant recognition mappings |
+| public.prediction_tracking | ✅ | ✅ | 016_tier9_ai_features.sql | AI prediction accuracy tracking |
+| public.ai_summaries | ✅ | ✅ | 016_tier9_ai_features.sql | Weekly/monthly AI summaries |
+| public.ai_notifications | ✅ | ✅ | 016_tier9_ai_features.sql | Proactive AI notifications |
+| public.ai_learning_rules | ✅ | ✅ | 016_tier9_ai_features.sql | User-taught AI rules |
+| public.search_history | ✅ | ✅ | 016_tier9_ai_features.sql | Natural language search history |
 
 ---
 
@@ -133,6 +140,11 @@ Track story completion status. This file reflects the actual implementation stat
 | TagPicker | src/components/tag-picker.tsx | ✅ |
 | NotificationBell | src/components/notification-bell.tsx | ✅ |
 | AIInsightsWidget | src/components/ai-insights-widget.tsx | ✅ |
+| WeeklySummaryCard | src/components/weekly-summary-card.tsx | ✅ |
+| NaturalLanguageSearch | src/components/natural-language-search.tsx | ✅ |
+| AIFinancialCalendar | src/components/ai-financial-calendar.tsx | ✅ |
+| AINotificationsPanel | src/components/ai-notifications-panel.tsx | ✅ |
+| AISettingsPanel | src/components/ai-settings.tsx | ✅ |
 | GoogleSigninButton | src/components/google-signin-button.tsx | ✅ |
 | LogoutButton | src/components/logout-button.tsx | ✅ |
 | Providers | src/components/providers.tsx | ✅ |
@@ -175,6 +187,15 @@ Track story completion status. This file reflects the actual implementation stat
 | /api/recurring-transactions/[id] | GET, PUT, DELETE | ✅ | Individual recurring transaction ops |
 | /api/recurring-transactions/generate | POST | ✅ | Auto-generate due transactions |
 | /api/ai-insights | GET | ✅ | Comprehensive AI analytics (health score, predictions, patterns, alerts) |
+| /api/ai-summary | GET, POST | ✅ | Weekly/monthly AI summaries with PDF export |
+| /api/ai-memory | GET, POST, DELETE | ✅ | Cross-session AI memory storage |
+| /api/ai-notifications | GET, POST, PUT | ✅ | Proactive AI notifications |
+| /api/merchants | GET, POST, PUT, DELETE | ✅ | Smart merchant recognition |
+| /api/natural-search | GET, POST | ✅ | Natural language search |
+| /api/prediction-tracking | GET, POST, PUT | ✅ | Prediction accuracy tracking |
+| /api/ai-calendar | GET | ✅ | AI financial calendar with payment scheduling |
+| /api/ai-learning | GET, POST, DELETE | ✅ | AI learning rules (teach via conversation) |
+| /api/ai-export | GET, POST | ✅ | AI data export/import |
 
 ---
 
@@ -210,6 +231,7 @@ Track story completion status. This file reflects the actual implementation stat
 | CSV Import schemas | src/lib/validators/csv-import.ts | ✅ |
 | Tag schemas | src/lib/validators/tag.ts | ✅ |
 | Recurring Transaction schemas | src/lib/validators/recurring-transaction.ts | ✅ |
+| AI Features schemas | src/lib/validators/ai-features.ts | ✅ |
 
 ---
 
@@ -481,6 +503,15 @@ Comprehensive AI analytics endpoint providing:
 | 2025-12-27 | Claude | Voice Input + Voice Output + Pagination (v1.1): Implemented speech-to-text (useSpeechRecognition hook, mic button in chat), text-to-speech (useSpeechSynthesis hook, voice settings, auto-speak, per-message playback), and transactions pagination (server-side with 25/page, pagination controls, server-side filtering). v1.1 complete! Build passes with no lint errors. |
 | 2025-12-28 | Claude | TIER 1 AI Enhancements (v1.2): Implemented 21/23 AI features. New `/api/ai-insights` endpoint with comprehensive analytics (health score, anomaly detection, predictions, patterns). Added 8 new AI chat tools (smart_categorize, what_if_scenario, get_report, compare_periods, find_savings_opportunities, get_bill_negotiation_tips, check_unused_budgets, track_financial_habits). Created AIInsightsWidget dashboard component with 4 tabs. Parked: Weekly AI Summary, Monthly AI Report. Build passes with no lint errors. |
 | 2025-12-28 | Claude | Tier 0 DevOps: GitHub Actions CI, security scans, Vercel preview/prod deploy, bundle size reporting, Dependabot, labeler, release automation, Husky/lint-staged/commitlint, issue/PR templates. |
+| 2025-12-28 | Claude | TIER 2 Data Visualization (15/15): All charts - spending trends, category breakdown, income vs expense, net worth, daily sparklines, budget gauges/comparison/heatmap, goal timeline/contributions, bill calendar/summary/timeline, cash flow waterfall, category trends. New `/dashboard/analytics` page. |
+| 2025-12-28 | Claude | TIER 3 UX Improvements (12/12): Keyboard shortcuts, command palette (Cmd+K), quick add FAB, global search, dark mode, dashboard customization, undo/redo, recent actions, favorites, mobile PWA improvements, onboarding tour. |
+| 2025-12-28 | Claude | TIER 4 Transaction Power Features (10/10): Multi-select, bulk delete/categorize/tag, auto-categorization rules with management UI, split transactions, transaction templates, transaction linking. |
+| 2025-12-28 | Claude | TIER 5 Budgeting Enhancements (8/8): Budget templates (50/30/20, Envelope, Zero-Based), annual budgets, budget copy forward, flexible periods, budget notes, custom alert thresholds. New `/dashboard/budgets/templates` page. |
+| 2025-12-28 | Claude | TIER 6 Goals & Bills (8/8): Goal categories/milestones/auto-contribute/sharing, bill auto-detection/categories/annual cost calculator/payment streaks. |
+| 2025-12-28 | Claude | TIER 7 Reports & Analytics (8/8): Custom date range, year-over-year, merchant spending, category deep dive, savings rate dashboard, monthly summary, PDF export, tax summary. New `/dashboard/reports` page. |
+| 2025-12-28 | Claude | Updated next-tasks.md with v1.3+ AI-focused roadmap (8 new tiers, 60+ new features). Updated README.md for v1.2. |
+| 2025-12-28 | Claude | TIER 8 AI Core Improvements (8/8): AI confirmation acknowledgement fix, tool error recovery, context memory (within session), quick reply suggestions, AI response improvements with financial context, fallback responses, request validation, multi-step action support. Bug fixes: chat history title truncation, AI expense query responses. |
+| 2025-12-28 | Claude | TIER 9 Advanced AI Capabilities (11/12 - 1 Parked): Weekly AI Summary widget, Monthly AI Report with PDF export, AI Chat Memory (Cross-Session), Proactive AI Notifications (budget warnings, bill reminders, savings opportunities), Smart Merchant Recognition with pattern matching, AI-Powered Natural Language Search, Spending Prediction Accuracy Tracking, AI Financial Calendar with payment scheduling, AI Voice Commands enhancement, AI Learning Mode (teach AI via conversation), AI Export/Import for preferences and data. Parked: Receipt OCR. New database migration 016_tier9_ai_features.sql with 7 tables. Build passes with no lint errors. |
 
 
 

@@ -16,17 +16,17 @@ jobs:
       NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy
     steps:
       - name: Checkout base
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           path: base
       - name: Checkout head
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: head
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 18
           cache: npm
@@ -52,7 +52,7 @@ jobs:
           npx tsx scripts/bundle-size.ts --root . --out ../head-bundle-size.json
           npx tsx scripts/compare-bundle-size.ts --base ../base-bundle-size.json --head ../head-bundle-size.json --out ../bundle-size-comment.md
       - name: Comment on PR
-        uses: peter-evans/create-or-update-comment@v4
+        uses: peter-evans/create-or-update-comment@v5
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body-path: bundle-size-comment.md

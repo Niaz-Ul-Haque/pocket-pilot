@@ -1,10 +1,25 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { supabaseAdmin } from "@/lib/supabase"
-import { goalUpdateSchema, calculateGoalDetails } from "@/lib/validators/goal"
+import { goalUpdateSchema, calculateGoalDetails, type Goal } from "@/lib/validators/goal"
+import { randomUUID } from "crypto"
 
 type RouteContext = {
   params: Promise<{ id: string }>
+}
+
+// Helper function to parse goal data
+function parseGoalData(data: Record<string, unknown>): Goal {
+  return {
+    ...data,
+    target_amount: parseFloat(data.target_amount as string),
+    current_amount: parseFloat(data.current_amount as string),
+    auto_contribute_amount: data.auto_contribute_amount ? parseFloat(data.auto_contribute_amount as string) : null,
+    category: (data.category as Goal["category"]) || "other",
+    is_shared: (data.is_shared as boolean) || false,
+    share_token: (data.share_token as string) || null,
+    auto_contribute_day: (data.auto_contribute_day as number) || null,
+  } as Goal
 }
 
 // GET /api/goals/[id] - Get a single goal
@@ -17,6 +32,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     const { id } = await context.params
 
+    // Fetch goal with milestones
     const { data, error } = await supabaseAdmin
       .from("goals")
       .select("*")
@@ -28,13 +44,26 @@ export async function GET(request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Goal not found" }, { status: 404 })
     }
 
-    const goalData = {
-      ...data,
-      target_amount: parseFloat(data.target_amount),
-      current_amount: parseFloat(data.current_amount),
+    // Fetch milestones for this goal
+    const { data: milestones } = await supabaseAdmin
+      .from("goal_milestones")
+      .select("*")
+      .eq("goal_id", id)
+      .eq("user_id", session.user.id)
+      .order("target_percentage", { ascending: true })
+
+    const goalData = parseGoalData(data)
+    const goalWithDetails = calculateGoalDetails(goalData)
+
+    // Add milestones to the response
+    if (milestones && milestones.length > 0) {
+      goalWithDetails.milestones = milestones.map((m) => ({
+        ...m,
+        target_amount: parseFloat(m.target_amount || "0"),
+      }))
     }
 
-    return NextResponse.json(calculateGoalDetails(goalData))
+    return NextResponse.json(goalWithDetails)
   } catch (error) {
     console.error("Error in GET /api/goals/[id]:", error)
     return NextResponse.json(
@@ -86,11 +115,29 @@ export async function PUT(request: Request, context: RouteContext) {
     if (validation.data.target_date !== undefined) {
       updateData.target_date = validation.data.target_date || null
     }
+    if (validation.data.category !== undefined) {
+      updateData.category = validation.data.category
+    }
+    if (validation.data.auto_contribute_amount !== undefined) {
+      updateData.auto_contribute_amount = validation.data.auto_contribute_amount
+    }
+    if (validation.data.auto_contribute_day !== undefined) {
+      updateData.auto_contribute_day = validation.data.auto_contribute_day
+    }
+
+    // Handle sharing toggle
+    if (validation.data.is_shared !== undefined) {
+      updateData.is_shared = validation.data.is_shared
+      // Generate share token if enabling sharing
+      if (validation.data.is_shared && !existingGoal.share_token) {
+        updateData.share_token = randomUUID()
+      }
+    }
 
     // Check if goal should be marked as completed
     const newTargetAmount = (updateData.target_amount as number | undefined) ?? parseFloat(existingGoal.target_amount)
     const currentAmount = parseFloat(existingGoal.current_amount)
-    
+
     if (currentAmount >= newTargetAmount && !existingGoal.is_completed) {
       updateData.is_completed = true
       updateData.completed_at = new Date().toISOString().split("T")[0]
@@ -115,11 +162,7 @@ export async function PUT(request: Request, context: RouteContext) {
       )
     }
 
-    const goalData = {
-      ...data,
-      target_amount: parseFloat(data.target_amount),
-      current_amount: parseFloat(data.current_amount),
-    }
+    const goalData = parseGoalData(data)
 
     return NextResponse.json(calculateGoalDetails(goalData))
   } catch (error) {
@@ -153,7 +196,14 @@ export async function DELETE(request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Goal not found" }, { status: 404 })
     }
 
-    // Delete contributions first (cascade should handle this, but being explicit)
+    // Delete milestones first
+    await supabaseAdmin
+      .from("goal_milestones")
+      .delete()
+      .eq("goal_id", id)
+      .eq("user_id", session.user.id)
+
+    // Delete contributions (cascade should handle this, but being explicit)
     await supabaseAdmin
       .from("goal_contributions")
       .delete()

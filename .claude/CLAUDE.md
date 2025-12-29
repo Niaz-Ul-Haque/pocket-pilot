@@ -8,6 +8,9 @@ This file provides **instructions for AI coding assistants** (CLAUDE, GitHub CLA
 
 ## Source of Truth Rules
 
+### Reminder
+If any SQL supabase needs to be udpated/amended/added/deleted, etc, please give add a new sql commands fuke under supabase/migrations so I can go and run them in SQL Editor in supabase web console when ready.
+
 ### 1. Always Consult Documentation First
 
 Before implementing or modifying any feature:
@@ -224,7 +227,7 @@ npm run build
 
 ### Step 2: Lint Check
 ```bash
-npm run lint
+npx eslint src
 ```
 - Must complete without errors
 - Fix all linting issues before proceeding

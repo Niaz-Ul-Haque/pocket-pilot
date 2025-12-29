@@ -58,7 +58,7 @@ FAIL: update stuff
 File: `.github/workflows/ci.yml`
 
 Runs on PRs and pushes to `master`:
-- `npm run lint`
+- `npx eslint src`
 - `npm run typecheck`
 - `npm run build`
 - `npm run test --if-present`

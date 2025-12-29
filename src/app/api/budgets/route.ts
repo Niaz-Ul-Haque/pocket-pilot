@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { supabaseAdmin } from "@/lib/supabase"
-import { budgetSchema, calculateBudgetDetails } from "@/lib/validators/budget"
+import { budgetSchema, calculateBudgetDetails, DEFAULT_ALERT_THRESHOLD } from "@/lib/validators/budget"
 
 /**
  * GET /api/budgets
@@ -179,14 +179,20 @@ export async function POST(request: Request) {
     )
   }
 
+  const { period, notes, alert_threshold, year, month } = validationResult.data
+
   const { data, error } = await supabaseAdmin
     .from("budgets")
     .insert({
       user_id: session.user.id,
       category_id,
       amount,
-      period: "MONTHLY",
+      period: period ?? "MONTHLY",
       rollover: rollover ?? false,
+      notes: notes ?? null,
+      alert_threshold: alert_threshold ?? DEFAULT_ALERT_THRESHOLD,
+      year: year ?? null,
+      month: month ?? null,
     })
     .select(`
       *,

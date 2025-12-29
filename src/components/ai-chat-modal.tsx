@@ -60,6 +60,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { useChat } from "@ai-sdk/react"
 import { TextStreamChatTransport } from "ai"
+import { Check, XCircle, Edit3 } from "lucide-react"
 
 interface ChatConversation {
   id: string
@@ -431,6 +432,47 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
           .join("") || "",
       })).filter((m) => m.content.trim() !== "") // Filter out empty messages
 
+  // Detect if quick reply suggestions should be shown
+  const lastMessage = displayMessages[displayMessages.length - 1]
+  const showQuickReplies = lastMessage?.role === "assistant" && !isChatLoading && (
+    lastMessage.content.toLowerCase().includes("does that look correct") ||
+    lastMessage.content.toLowerCase().includes("is that correct") ||
+    lastMessage.content.toLowerCase().includes("is that right") ||
+    lastMessage.content.toLowerCase().includes("would you like me to") ||
+    lastMessage.content.toLowerCase().includes("shall i") ||
+    lastMessage.content.toLowerCase().includes("want me to") ||
+    lastMessage.content.toLowerCase().includes("should i") ||
+    lastMessage.content.toLowerCase().includes("can i proceed") ||
+    lastMessage.content.toLowerCase().includes("ready to add") ||
+    lastMessage.content.toLowerCase().includes("confirm") ||
+    lastMessage.content.endsWith("?")
+  )
+
+  // Detect if it's a yes/no question vs a detail question
+  const isYesNoQuestion = lastMessage?.role === "assistant" && (
+    lastMessage.content.toLowerCase().includes("does that look correct") ||
+    lastMessage.content.toLowerCase().includes("is that correct") ||
+    lastMessage.content.toLowerCase().includes("is that right") ||
+    lastMessage.content.toLowerCase().includes("would you like me to") ||
+    lastMessage.content.toLowerCase().includes("shall i") ||
+    lastMessage.content.toLowerCase().includes("want me to") ||
+    lastMessage.content.toLowerCase().includes("should i") ||
+    lastMessage.content.toLowerCase().includes("can i proceed") ||
+    lastMessage.content.toLowerCase().includes("are you sure")
+  )
+
+  // Quick reply handler
+  const handleQuickReply = useCallback((reply: string) => {
+    if (inputRef.current) {
+      inputRef.current.value = reply
+    }
+    // Submit the form programmatically
+    const form = inputRef.current?.closest("form")
+    if (form) {
+      form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }))
+    }
+  }, [])
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -477,16 +519,20 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
                         onClick={() => loadConversation(conv.id)}
                       >
                         <MessageSquare className="h-4 w-4 shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{conv.title}</p>
-                          <p className="text-xs text-muted-foreground">
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                          <p className="text-sm font-medium truncate max-w-[160px]">
+                            {conv.title.length > 20
+                              ? conv.title.slice(0, 20) + "..."
+                              : conv.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
                             {format(new Date(conv.updated_at), "MMM d, h:mm a")}
                           </p>
                         </div>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="h-6 w-6 shrink-0 opacity-100"
                           onClick={(e) => {
                             e.stopPropagation()
                             setDeleteConversationId(conv.id)
@@ -691,6 +737,69 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
                         )}
                       </div>
                     ))}
+                    {/* Quick Reply Suggestions */}
+                    {showQuickReplies && !isChatLoading && displayMessages.length > 0 && (
+                      <div className="flex flex-wrap gap-2 ml-11 mt-2">
+                        {isYesNoQuestion ? (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs gap-1 border-green-200 hover:border-green-400 hover:bg-green-50 dark:border-green-800 dark:hover:border-green-600 dark:hover:bg-green-950"
+                              onClick={() => handleQuickReply("Yes, add it")}
+                            >
+                              <Check className="h-3 w-3 text-green-600" />
+                              Yes, add it
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs gap-1 border-red-200 hover:border-red-400 hover:bg-red-50 dark:border-red-800 dark:hover:border-red-600 dark:hover:bg-red-950"
+                              onClick={() => handleQuickReply("No, cancel")}
+                            >
+                              <XCircle className="h-3 w-3 text-red-600" />
+                              No, cancel
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs gap-1"
+                              onClick={() => handleQuickReply("Let me change the details")}
+                            >
+                              <Edit3 className="h-3 w-3" />
+                              Edit details
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs"
+                              onClick={() => handleQuickReply("Yes")}
+                            >
+                              Yes
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs"
+                              onClick={() => handleQuickReply("No")}
+                            >
+                              No
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs"
+                              onClick={() => handleQuickReply("Tell me more")}
+                            >
+                              Tell me more
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    )}
                     {isChatLoading && (
                       <div className="flex gap-3">
                         <div className="p-2 rounded-full bg-primary/10 h-8 w-8 flex items-center justify-center shrink-0">

@@ -116,11 +116,35 @@ export async function PUT(request: Request, { params }: RouteParams) {
     return NextResponse.json({ error: "Budget not found" }, { status: 404 })
   }
 
-  const updateData: { amount: number; rollover?: boolean } = {
-    amount: validationResult.data.amount,
+  const updateData: Record<string, unknown> = {}
+
+  if (validationResult.data.amount !== undefined) {
+    updateData.amount = validationResult.data.amount
   }
   if (validationResult.data.rollover !== undefined) {
     updateData.rollover = validationResult.data.rollover
+  }
+  if (validationResult.data.period !== undefined) {
+    updateData.period = validationResult.data.period
+  }
+  if (validationResult.data.notes !== undefined) {
+    updateData.notes = validationResult.data.notes
+  }
+  if (validationResult.data.alert_threshold !== undefined) {
+    updateData.alert_threshold = validationResult.data.alert_threshold
+  }
+  if (validationResult.data.year !== undefined) {
+    updateData.year = validationResult.data.year
+  }
+  if (validationResult.data.month !== undefined) {
+    updateData.month = validationResult.data.month
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    return NextResponse.json(
+      { error: "No fields to update" },
+      { status: 400 }
+    )
   }
 
   const { data, error } = await supabaseAdmin

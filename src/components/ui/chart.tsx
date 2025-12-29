@@ -1,6 +1,54 @@
 "use client"
 
 import * as React from "react"
-import { Bar, BarChart, ResponsiveContainer, Line, LineChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts"
+import {
+  Bar,
+  BarChart,
+  ResponsiveContainer,
+  Line,
+  LineChart,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  Pie,
+  PieChart,
+  Cell,
+  Area,
+  AreaChart,
+  ReferenceLine,
+  ComposedChart,
+  Funnel,
+  FunnelChart,
+  LabelList,
+  RadialBar,
+  RadialBarChart,
+  PolarAngleAxis,
+} from "recharts"
 
-export { Bar, BarChart, ResponsiveContainer, Line, LineChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend }
+export {
+  Bar,
+  BarChart,
+  ResponsiveContainer,
+  Line,
+  LineChart,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  Pie,
+  PieChart,
+  Cell,
+  Area,
+  AreaChart,
+  ReferenceLine,
+  ComposedChart,
+  Funnel,
+  FunnelChart,
+  LabelList,
+  RadialBar,
+  RadialBarChart,
+  PolarAngleAxis,
+}

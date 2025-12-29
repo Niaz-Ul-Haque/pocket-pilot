@@ -1,8 +1,21 @@
 import { z } from "zod"
 
-// Budget periods (MVP: MONTHLY only)
-export const BUDGET_PERIODS = ["MONTHLY"] as const
+// Budget periods - now supporting flexible periods
+export const BUDGET_PERIODS = ["MONTHLY", "WEEKLY", "BIWEEKLY", "YEARLY"] as const
 export type BudgetPeriod = (typeof BUDGET_PERIODS)[number]
+
+// Budget period display labels
+export const BUDGET_PERIOD_LABELS: Record<BudgetPeriod, string> = {
+  MONTHLY: "Monthly",
+  WEEKLY: "Weekly",
+  BIWEEKLY: "Bi-weekly",
+  YEARLY: "Yearly",
+}
+
+// Default alert thresholds
+export const DEFAULT_ALERT_THRESHOLD = 90
+export const ALERT_THRESHOLD_MIN = 0
+export const ALERT_THRESHOLD_MAX = 100
 
 // Schema for creating a budget
 export const budgetSchema = z.object({
@@ -12,6 +25,16 @@ export const budgetSchema = z.object({
     .positive("Budget must be greater than 0")
     .multipleOf(0.01, "Amount can only have up to 2 decimal places"),
   rollover: z.boolean().default(false),
+  period: z.enum(BUDGET_PERIODS).default("MONTHLY"),
+  notes: z.string().max(500, "Notes cannot exceed 500 characters").optional().nullable(),
+  alert_threshold: z
+    .number()
+    .int("Alert threshold must be a whole number")
+    .min(ALERT_THRESHOLD_MIN, `Alert threshold must be at least ${ALERT_THRESHOLD_MIN}%`)
+    .max(ALERT_THRESHOLD_MAX, `Alert threshold cannot exceed ${ALERT_THRESHOLD_MAX}%`)
+    .default(DEFAULT_ALERT_THRESHOLD),
+  year: z.number().int().min(2000).max(2100).optional().nullable(),
+  month: z.number().int().min(1).max(12).optional().nullable(),
 })
 
 // Schema for updating a budget
@@ -19,8 +42,37 @@ export const budgetUpdateSchema = z.object({
   amount: z
     .number({ message: "Budget amount is required" })
     .positive("Budget must be greater than 0")
-    .multipleOf(0.01, "Amount can only have up to 2 decimal places"),
+    .multipleOf(0.01, "Amount can only have up to 2 decimal places")
+    .optional(),
   rollover: z.boolean().optional(),
+  period: z.enum(BUDGET_PERIODS).optional(),
+  notes: z.string().max(500, "Notes cannot exceed 500 characters").optional().nullable(),
+  alert_threshold: z
+    .number()
+    .int("Alert threshold must be a whole number")
+    .min(ALERT_THRESHOLD_MIN)
+    .max(ALERT_THRESHOLD_MAX)
+    .optional(),
+  year: z.number().int().min(2000).max(2100).optional().nullable(),
+  month: z.number().int().min(1).max(12).optional().nullable(),
+})
+
+// Schema for copying budgets forward
+export const budgetCopyForwardSchema = z.object({
+  source_year: z.number().int().min(2000).max(2100),
+  source_month: z.number().int().min(1).max(12),
+  target_year: z.number().int().min(2000).max(2100),
+  target_month: z.number().int().min(1).max(12),
+  include_amounts: z.boolean().default(true),
+  include_notes: z.boolean().default(true),
+})
+
+// Schema for budget vs actual report
+export const budgetReportSchema = z.object({
+  start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
+  end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
+  category_ids: z.array(z.string().uuid()).optional(),
+  period: z.enum(BUDGET_PERIODS).optional(),
 })
 
 // Type inferred from create schema (form data)
@@ -35,8 +87,18 @@ export type Budget = {
   amount: number
   period: BudgetPeriod
   rollover: boolean
+  notes: string | null
+  alert_threshold: number
+  year: number | null
+  month: number | null
   created_at: string
 }
+
+// Budget copy forward form data
+export type BudgetCopyForwardData = z.infer<typeof budgetCopyForwardSchema>
+
+// Budget report form data
+export type BudgetReportData = z.infer<typeof budgetReportSchema>
 
 // Budget with joined category data and calculated spent
 export type BudgetWithDetails = Budget & {
@@ -52,10 +114,43 @@ export type BudgetWithDetails = Budget & {
 // Get budget status based on percentage
 export type BudgetStatus = "safe" | "warning" | "over"
 
-export function getBudgetStatus(percentage: number): BudgetStatus {
+/**
+ * Get budget status based on percentage and custom alert threshold
+ * @param percentage - Current spending percentage
+ * @param alertThreshold - Custom threshold for warning (default 90)
+ */
+export function getBudgetStatus(
+  percentage: number,
+  alertThreshold: number = DEFAULT_ALERT_THRESHOLD
+): BudgetStatus {
   if (percentage >= 100) return "over"
-  if (percentage >= 90) return "warning"
+  if (percentage >= alertThreshold) return "warning"
   return "safe"
+}
+
+// Budget vs Actual report types
+export type BudgetVsActualItem = {
+  category_id: string
+  category_name: string
+  budgeted: number
+  actual: number
+  variance: number
+  variance_percentage: number
+  status: BudgetStatus
+}
+
+export type BudgetVsActualReport = {
+  period: {
+    start: string
+    end: string
+  }
+  summary: {
+    total_budgeted: number
+    total_actual: number
+    total_variance: number
+    overall_status: BudgetStatus
+  }
+  items: BudgetVsActualItem[]
 }
 
 // Get status color classes

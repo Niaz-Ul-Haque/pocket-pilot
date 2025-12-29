@@ -250,7 +250,7 @@ The AI assistant (Pocket Pilot) can help you:
 | `npm run dev` | Start development server |
 | `npm run build` | Build for production |
 | `npm start` | Start production server |
-| `npm run lint` | Run ESLint |
+| `npx eslint src` | Run ESLint |
 | `npm run typecheck` | Run TypeScript checks |
 
 ---

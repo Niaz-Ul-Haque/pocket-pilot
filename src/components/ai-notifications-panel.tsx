@@ -7,6 +7,13 @@ import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
   Bell,
   RefreshCw,
   Check,
@@ -21,6 +28,7 @@ import {
   Calendar,
   Trophy,
   BellOff,
+  ExternalLink,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { AINotification } from "@/lib/validators/ai-features"
@@ -36,6 +44,7 @@ export function AINotificationsPanel({ compact = false, maxItems = 10 }: AINotif
   const [counts, setCounts] = useState({ total: 0, unread: 0, critical: 0, high: 0 })
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
+  const [selectedNotification, setSelectedNotification] = useState<AINotification | null>(null)
 
   const fetchNotifications = useCallback(async () => {
     setLoading(true)
@@ -161,43 +170,134 @@ export function AINotificationsPanel({ compact = false, maxItems = 10 }: AINotif
   }
 
   if (compact) {
+    const displayedNotifications = notifications.slice(0, 3)
+    const displayedCount = displayedNotifications.length
+    const remainingCount = notifications.length - displayedCount
+
     return (
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Bell className="h-4 w-4" />
-            <span className="text-sm font-medium">AI Alerts</span>
+      <>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Bell className="h-4 w-4" />
+              <span className="text-sm font-medium">AI Alerts</span>
+            </div>
+            {displayedCount > 0 && (
+              <Badge variant="destructive" className="h-5">
+                {displayedCount}{remainingCount > 0 ? `+${remainingCount}` : ""}
+              </Badge>
+            )}
           </div>
-          {counts.unread > 0 && (
-            <Badge variant="destructive" className="h-5">
-              {counts.unread}
-            </Badge>
-          )}
-        </div>
-        <ScrollArea className="h-[150px]">
-          <div className="space-y-2">
-            {notifications.slice(0, 3).map((n) => (
-              <div
-                key={n.id}
-                className={cn(
-                  "p-2 rounded-lg border text-sm",
-                  !n.is_read && "bg-muted/50"
-                )}
-              >
-                <div className="flex items-start gap-2">
-                  <div className={cn("p-1 rounded", getPriorityColor(n.priority))}>
-                    {getNotificationIcon(n.notification_type)}
+          <ScrollArea className="h-[150px]">
+            <div className="space-y-2">
+              {displayedNotifications.map((n) => (
+                <button
+                  key={n.id}
+                  onClick={() => {
+                    setSelectedNotification(n)
+                    if (!n.is_read) {
+                      markAsRead([n.id])
+                    }
+                  }}
+                  className={cn(
+                    "w-full text-left p-2 rounded-lg border text-sm transition-colors hover:bg-muted/80 cursor-pointer",
+                    !n.is_read && "bg-muted/50"
+                  )}
+                >
+                  <div className="flex items-start gap-2">
+                    <div className={cn("p-1 rounded", getPriorityColor(n.priority))}>
+                      {getNotificationIcon(n.notification_type)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{n.title}</p>
+                      <p className="text-xs text-muted-foreground">{formatTime(n.created_at)}</p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{n.title}</p>
-                    <p className="text-xs text-muted-foreground">{formatTime(n.created_at)}</p>
+                </button>
+              ))}
+              {displayedCount === 0 && !loading && (
+                <div className="text-center py-4 text-sm text-muted-foreground">
+                  No AI alerts
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+
+        {/* Detail Modal for Compact View */}
+        <Dialog open={!!selectedNotification} onOpenChange={(open) => !open && setSelectedNotification(null)}>
+          <DialogContent className="max-w-md">
+            {selectedNotification && (
+              <>
+                <DialogHeader>
+                  <div className="flex items-center gap-2">
+                    <div className={cn("p-2 rounded-lg", getPriorityColor(selectedNotification.priority))}>
+                      {getNotificationIcon(selectedNotification.notification_type)}
+                    </div>
+                    <div>
+                      <DialogTitle>{selectedNotification.title}</DialogTitle>
+                      <DialogDescription className="flex items-center gap-2 mt-1">
+                        <Badge variant="outline" className="text-xs">
+                          {selectedNotification.notification_type.replace(/_/g, " ")}
+                        </Badge>
+                        <span className="text-xs">{formatTime(selectedNotification.created_at)}</span>
+                      </DialogDescription>
+                    </div>
+                  </div>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">{selectedNotification.message}</p>
+
+                  <div className="flex items-center justify-between">
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "capitalize",
+                        selectedNotification.priority === "critical" && "border-red-500 text-red-600",
+                        selectedNotification.priority === "high" && "border-orange-500 text-orange-600",
+                        selectedNotification.priority === "medium" && "border-yellow-500 text-yellow-600",
+                        selectedNotification.priority === "low" && "border-blue-500 text-blue-600"
+                      )}
+                    >
+                      {selectedNotification.priority} priority
+                    </Badge>
+
+                    {selectedNotification.action_url && (
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={selectedNotification.action_url}>
+                          {selectedNotification.action_label || "View Details"}
+                          <ExternalLink className="h-3 w-3 ml-1" />
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        dismissNotification(selectedNotification.id)
+                        setSelectedNotification(null)
+                      }}
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Dismiss
+                    </Button>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => setSelectedNotification(null)}
+                    >
+                      Close
+                    </Button>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </ScrollArea>
-      </div>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+      </>
     )
   }
 

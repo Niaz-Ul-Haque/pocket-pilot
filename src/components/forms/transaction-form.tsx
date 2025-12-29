@@ -34,6 +34,7 @@ import {
 import type { Account } from "@/lib/validators/account"
 import type { Category } from "@/lib/validators/category"
 import { TagPicker } from "@/components/tag-picker"
+import { useActionHistory } from "@/components/providers"
 
 interface TransactionFormProps {
   transaction?: TransactionWithDetails
@@ -52,6 +53,7 @@ export function TransactionForm({
 }: TransactionFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
+  const { addAction } = useActionHistory()
   const isEditing = !!transaction
 
   // Fetch existing tags when editing
@@ -152,6 +154,14 @@ export function TransactionForm({
           }
         }
       }
+
+      // Track action in history
+      addAction({
+        type: isEditing ? "update" : "create",
+        entity: "transaction",
+        data: savedTransaction,
+        description: `${isEditing ? "Updated" : "Added"} transaction: ${savedTransaction.description || data.type} - $${data.amount.toFixed(2)}`,
+      })
 
       onSuccess(savedTransaction)
     } catch (error) {

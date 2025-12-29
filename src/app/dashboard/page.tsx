@@ -62,6 +62,7 @@ import {
   CashFlowWaterfall,
   DailySpendingSparklineCard,
 } from "@/components/charts"
+import { useUserPreferences } from "@/components/providers"
 
 // Get icon based on account type
 function getAccountIcon(type: string) {
@@ -92,7 +93,7 @@ function QuickActions({ onOpenAIChat }: { onOpenAIChat: () => void }) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
           <Button variant="outline" size="sm" className="h-auto py-3 flex-col gap-1" asChild>
             <Link href="/dashboard/transactions">
               <Plus className="h-4 w-4" />
@@ -123,6 +124,12 @@ function QuickActions({ onOpenAIChat }: { onOpenAIChat: () => void }) {
               <span className="text-xs">Import CSV</span>
             </Link>
           </Button>
+          <Button variant="outline" size="sm" className="h-auto py-3 flex-col gap-1" asChild>
+            <Link href="/dashboard/analytics">
+              <TrendingUp className="h-4 w-4" />
+              <span className="text-xs">Analytics</span>
+            </Link>
+          </Button>
           <Button
             variant="default"
             size="sm"
@@ -131,6 +138,41 @@ function QuickActions({ onOpenAIChat }: { onOpenAIChat: () => void }) {
           >
             <Sparkles className="h-4 w-4" />
             <span className="text-xs">AI Advisor</span>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// AI Advisor Widget Component
+function AIAdvisorWidget({ onOpenAIChat }: { onOpenAIChat: () => void }) {
+  return (
+    <Card className="bg-gradient-to-br from-violet-500/10 via-purple-500/10 to-fuchsia-500/10 border-purple-200 dark:border-purple-800">
+      <CardContent className="pt-6">
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          <div className="p-4 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-white shrink-0">
+            <Sparkles className="h-8 w-8" />
+          </div>
+          <div className="flex-1 text-center sm:text-left">
+            <h3 className="text-lg font-semibold mb-1">AI Financial Advisor</h3>
+            <p className="text-sm text-muted-foreground mb-3">
+              Get personalized insights, ask questions about your spending, and receive smart recommendations to improve your financial health.
+            </p>
+            <div className="flex flex-wrap gap-2 justify-center sm:justify-start text-xs text-muted-foreground mb-4">
+              <span className="px-2 py-1 bg-muted rounded-full">Spending analysis</span>
+              <span className="px-2 py-1 bg-muted rounded-full">Budget advice</span>
+              <span className="px-2 py-1 bg-muted rounded-full">Savings tips</span>
+              <span className="px-2 py-1 bg-muted rounded-full">Goal tracking</span>
+            </div>
+          </div>
+          <Button
+            size="lg"
+            className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white shrink-0"
+            onClick={onOpenAIChat}
+          >
+            <Sparkles className="h-4 w-4 mr-2" />
+            Chat with AI
           </Button>
         </div>
       </CardContent>
@@ -218,6 +260,10 @@ function StatsCards({
 export default function DashboardPage() {
   const { data: session } = useSession()
   const firstName = session?.user?.name?.split(" ")[0] || "there"
+  const { preferences } = useUserPreferences()
+
+  // Helper to check if a widget is visible
+  const isWidgetVisible = (widgetId: string) => preferences.dashboardWidgets.includes(widgetId)
 
   // Data state
   const [accounts, setAccounts] = useState<Account[]>([])
@@ -397,41 +443,57 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <StatsCards
-        totalBalance={totalBalance}
-        accountCount={accounts.length}
-        monthlyIncome={monthlyIncome}
-        monthlyExpenses={monthlyExpenses}
-      />
+      {isWidgetVisible("stats") && (
+        <StatsCards
+          totalBalance={totalBalance}
+          accountCount={accounts.length}
+          monthlyIncome={monthlyIncome}
+          monthlyExpenses={monthlyExpenses}
+        />
+      )}
 
       {/* Quick Actions */}
-      <QuickActions onOpenAIChat={() => setIsAIChatOpen(true)} />
+      {isWidgetVisible("quick-actions") && (
+        <QuickActions onOpenAIChat={() => setIsAIChatOpen(true)} />
+      )}
+
+      {/* AI Advisor Widget */}
+      {isWidgetVisible("ai-advisor") && (
+        <AIAdvisorWidget onOpenAIChat={() => setIsAIChatOpen(true)} />
+      )}
 
       {/* AI Insights Widget */}
-      <AIInsightsWidget />
+      {isWidgetVisible("ai-insights") && <AIInsightsWidget />}
 
       {/* AI Summary and Notifications */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <WeeklySummaryCard />
-        <AINotificationsPanel compact maxItems={5} />
-      </div>
+      {isWidgetVisible("ai-insights") && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <WeeklySummaryCard />
+          <AINotificationsPanel compact maxItems={5} />
+        </div>
+      )}
 
       {/* Data Visualization Charts */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <SpendingTrendChart months={6} />
-        <CategoryBreakdownChart />
-      </div>
+      {(isWidgetVisible("spending-trend") || isWidgetVisible("category-breakdown")) && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {isWidgetVisible("spending-trend") && <SpendingTrendChart months={6} />}
+          {isWidgetVisible("category-breakdown") && <CategoryBreakdownChart />}
+        </div>
+      )}
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <IncomeVsExpenseChart months={6} />
-        <CashFlowWaterfall />
-      </div>
+      {(isWidgetVisible("income-vs-expense") || isWidgetVisible("cash-flow")) && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {isWidgetVisible("income-vs-expense") && <IncomeVsExpenseChart months={6} />}
+          {isWidgetVisible("cash-flow") && <CashFlowWaterfall />}
+        </div>
+      )}
 
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left Column - Takes 2 cols */}
         <div className="lg:col-span-2 space-y-6">
           {/* Accounts Overview */}
+          {isWidgetVisible("accounts") && (
           <Card>
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <div>
@@ -486,8 +548,10 @@ export default function DashboardPage() {
               )}
             </CardContent>
           </Card>
+          )}
 
           {/* Recent Transactions */}
+          {isWidgetVisible("transactions") && (
           <Card>
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <div>
@@ -552,8 +616,10 @@ export default function DashboardPage() {
               )}
             </CardContent>
           </Card>
+          )}
 
           {/* Budget Overview */}
+          {isWidgetVisible("budgets") && (
           <Card>
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <div>
@@ -632,11 +698,13 @@ export default function DashboardPage() {
               )}
             </CardContent>
           </Card>
+          )}
         </div>
 
         {/* Right Column */}
         <div className="space-y-6">
           {/* Categories Summary */}
+          {isWidgetVisible("categories") && (
           <Card>
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <div>
@@ -689,8 +757,10 @@ export default function DashboardPage() {
               )}
             </CardContent>
           </Card>
+          )}
 
           {/* Savings Goals */}
+          {isWidgetVisible("goals") && (
           <Card>
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <div>
@@ -740,8 +810,10 @@ export default function DashboardPage() {
               )}
             </CardContent>
           </Card>
+          )}
 
           {/* Upcoming Bills */}
+          {isWidgetVisible("bills") && (
           <Card>
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <div>
@@ -798,6 +870,7 @@ export default function DashboardPage() {
               )}
             </CardContent>
           </Card>
+          )}
         </div>
       </div>
 

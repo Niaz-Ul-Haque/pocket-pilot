@@ -390,7 +390,7 @@ User mentioned potential Stripe integration with AI features behind subscription
 **IMPORTANT:** After implementing any feature:
 
 1. Run `npm run build` - must pass without errors
-2. Run `npm run lint` - must pass without errors
+2. Run `npx eslint src` - must pass without errors
 3. Update relevant documentation
 4. Mark feature as complete in this file
 5. Only proceed to next task after build + lint pass
@@ -416,4 +416,4 @@ When implementing new features, update:
 - No investment tracking (users can use transactions)
 - Personal/free project for now
 - Keep freemium structure in mind for future monetization
-- If any SQL supabe needs to be udpated/amended/added/deleted, etc, please give em the sql commans under supabase/migrations so I can go and run them in SQL Editor in supabase web console.
+- If any SQL supabase needs to be udpated/amended/added/deleted, etc, please give em the sql commans under supabase/migrations so I can go and run them in SQL Editor in supabase web console.

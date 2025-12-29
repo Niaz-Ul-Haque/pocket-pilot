@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { supabase } from "@/lib/supabase"
+import { supabaseAdmin } from "@/lib/supabase"
 import { startOfMonth, endOfMonth, subMonths, format, eachDayOfInterval, parseISO, differenceInMonths } from "date-fns"
 
 // Types for chart data responses
@@ -169,7 +169,7 @@ async function getSpendingTrend(userId: string, months: number): Promise<Spendin
     const start = startOfMonth(date)
     const end = endOfMonth(date)
 
-    const { data: transactions } = await supabase
+    const { data: transactions } = await supabaseAdmin
       .from("transactions")
       .select("amount")
       .eq("user_id", userId)
@@ -197,7 +197,7 @@ async function getCategoryBreakdown(userId: string): Promise<CategoryBreakdownDa
   const start = startOfMonth(now)
   const end = endOfMonth(now)
 
-  const { data: transactions } = await supabase
+  const { data: transactions } = await supabaseAdmin
     .from("transactions")
     .select(`
       amount,
@@ -243,7 +243,7 @@ async function getDailySpending(userId: string): Promise<DailySpendingData[]> {
   const start = startOfMonth(now)
   const end = now // Only up to today
 
-  const { data: transactions } = await supabase
+  const { data: transactions } = await supabaseAdmin
     .from("transactions")
     .select("date, amount")
     .eq("user_id", userId)
@@ -274,7 +274,7 @@ async function getNetWorthHistory(userId: string, months: number): Promise<NetWo
   const data: NetWorthData[] = []
 
   // Get all transactions up to now
-  const { data: allTransactions } = await supabase
+  const { data: allTransactions } = await supabaseAdmin
     .from("transactions")
     .select("date, amount")
     .eq("user_id", userId)
@@ -314,7 +314,7 @@ async function getBudgetComparison(userId: string): Promise<BudgetComparisonData
   const lastMonthEnd = endOfMonth(subMonths(now, 1))
 
   // Get budgets with category info
-  const { data: budgets } = await supabase
+  const { data: budgets } = await supabaseAdmin
     .from("budgets")
     .select(`
       amount,
@@ -328,7 +328,7 @@ async function getBudgetComparison(userId: string): Promise<BudgetComparisonData
   if (!budgets?.length) return []
 
   // Get this month's transactions
-  const { data: thisMonthTransactions } = await supabase
+  const { data: thisMonthTransactions } = await supabaseAdmin
     .from("transactions")
     .select("category_id, amount")
     .eq("user_id", userId)
@@ -337,7 +337,7 @@ async function getBudgetComparison(userId: string): Promise<BudgetComparisonData
     .lte("date", format(thisMonthEnd, "yyyy-MM-dd"))
 
   // Get last month's transactions
-  const { data: lastMonthTransactions } = await supabase
+  const { data: lastMonthTransactions } = await supabaseAdmin
     .from("transactions")
     .select("category_id, amount")
     .eq("user_id", userId)
@@ -379,7 +379,7 @@ async function getSpendingHeatmap(userId: string): Promise<HeatmapData[]> {
   const start = startOfMonth(now)
   const end = endOfMonth(now)
 
-  const { data: transactions } = await supabase
+  const { data: transactions } = await supabaseAdmin
     .from("transactions")
     .select("date, amount")
     .eq("user_id", userId)
@@ -413,7 +413,7 @@ async function getSpendingHeatmap(userId: string): Promise<HeatmapData[]> {
 
 // Get goal timeline data
 async function getGoalTimeline(userId: string): Promise<GoalTimelineData[]> {
-  const { data: goals } = await supabase
+  const { data: goals } = await supabaseAdmin
     .from("goals")
     .select("*")
     .eq("user_id", userId)
@@ -423,7 +423,7 @@ async function getGoalTimeline(userId: string): Promise<GoalTimelineData[]> {
   if (!goals?.length) return []
 
   // Get contribution history to calculate average rate
-  const { data: contributions } = await supabase
+  const { data: contributions } = await supabaseAdmin
     .from("goal_contributions")
     .select("goal_id, amount, date")
     .eq("user_id", userId)
@@ -482,7 +482,7 @@ async function getGoalContributions(
   const now = new Date()
   const startDate = subMonths(now, months - 1)
 
-  let query = supabase
+  let query = supabaseAdmin
     .from("goal_contributions")
     .select("goal_id, amount, date")
     .eq("user_id", userId)
@@ -524,7 +524,7 @@ async function getBillCalendar(userId: string): Promise<BillCalendarData[]> {
   const start = startOfMonth(now)
   const end = endOfMonth(now)
 
-  const { data: bills } = await supabase
+  const { data: bills } = await supabaseAdmin
     .from("bills")
     .select("id, name, amount, next_due_date")
     .eq("user_id", userId)
@@ -572,7 +572,7 @@ async function getBillCalendar(userId: string): Promise<BillCalendarData[]> {
 
 // Get bills summary (pie chart data)
 async function getBillsSummary(userId: string): Promise<CategoryBreakdownData[]> {
-  const { data: bills } = await supabase
+  const { data: bills } = await supabaseAdmin
     .from("bills")
     .select(`
       amount,
@@ -627,7 +627,7 @@ async function getCashFlowWaterfall(userId: string): Promise<WaterfallData[]> {
   const end = endOfMonth(now)
 
   // Get transactions with categories
-  const { data: transactions } = await supabase
+  const { data: transactions } = await supabaseAdmin
     .from("transactions")
     .select(`
       amount,
@@ -692,7 +692,7 @@ async function getCategoryTrends(
   const startDate = subMonths(now, months - 1)
 
   // Get categories
-  const { data: categories } = await supabase
+  const { data: categories } = await supabaseAdmin
     .from("categories")
     .select("id, name")
     .eq("user_id", userId)
@@ -709,7 +709,7 @@ async function getCategoryTrends(
   }
 
   // Get transactions
-  const { data: transactions } = await supabase
+  const { data: transactions } = await supabaseAdmin
     .from("transactions")
     .select("category_id, amount, date")
     .eq("user_id", userId)

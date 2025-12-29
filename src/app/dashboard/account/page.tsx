@@ -16,7 +16,10 @@ import {
   CreditCard,
   Sparkles,
   RotateCcw,
+  Wand2,
+  ChevronRight,
 } from "lucide-react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -303,6 +306,27 @@ export default function AccountPage() {
             >
               <RotateCcw className="h-4 w-4 mr-2" />
               Reset Tour
+            </Button>
+          </div>
+
+          <Separator />
+
+          {/* Auto-Categorization Link */}
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <Label>Auto-Categorization</Label>
+                <Wand2 className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Create rules to automatically categorize transactions
+              </p>
+            </div>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/dashboard/settings/auto-categorization">
+                Manage Rules
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Link>
             </Button>
           </div>
         </CardContent>

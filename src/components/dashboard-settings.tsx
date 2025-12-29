@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils"
 
 const WIDGET_CONFIG = [
   { id: "stats", name: "Stats Cards", description: "Net worth, income, expenses, net change" },
+  { id: "ai-advisor", name: "AI Advisor", description: "Chat with your AI financial assistant" },
   { id: "quick-actions", name: "Quick Actions", description: "Common action buttons" },
   { id: "ai-insights", name: "AI Insights", description: "AI-powered financial insights" },
   { id: "spending-trend", name: "Spending Trend", description: "Line chart of spending over time" },

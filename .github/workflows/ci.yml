@@ -24,7 +24,7 @@ jobs:
       - name: Install deps
         run: npm ci
       - name: Lint
-        run: npm run lint
+        run: npx eslint src
 
   typecheck:
     runs-on: ubuntu-latest

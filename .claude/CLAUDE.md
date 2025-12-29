@@ -227,7 +227,7 @@ npm run build
 
 ### Step 2: Lint Check
 ```bash
-npm run lint
+npx eslint src
 ```
 - Must complete without errors
 - Fix all linting issues before proceeding

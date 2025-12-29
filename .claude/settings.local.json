@@ -14,7 +14,7 @@
       "Write",
       "WebFetch",
       "WebSearch",
-      "Bash(npm run lint)",
+      "Bash(npx eslint src)",
       "Bash(npm run build:*)",
       "Bash(npm ls:*)",
       "Bash(cat:*)",

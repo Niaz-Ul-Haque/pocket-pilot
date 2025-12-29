@@ -193,18 +193,23 @@ export function OnboardingTour({ open, onOpenChange }: OnboardingTourProps) {
 // Hook to auto-show tour for new users
 export function useOnboardingTour() {
   const [showTour, setShowTour] = useState(false)
-  const { preferences } = useUserPreferences()
+  const [hasChecked, setHasChecked] = useState(false)
+  const { preferences, isPreferencesLoaded } = useUserPreferences()
 
   useEffect(() => {
+    // Wait for preferences to be loaded from localStorage before checking
+    if (!isPreferencesLoaded || hasChecked) return
+
     // Show tour if user hasn't seen it yet (after a small delay for page load)
     const timer = setTimeout(() => {
       if (!preferences.hasSeenOnboardingTour) {
         setShowTour(true)
       }
-    }, 1000)
+      setHasChecked(true)
+    }, 500)
 
     return () => clearTimeout(timer)
-  }, [preferences.hasSeenOnboardingTour])
+  }, [isPreferencesLoaded, preferences.hasSeenOnboardingTour, hasChecked])
 
   return { showTour, setShowTour }
 }

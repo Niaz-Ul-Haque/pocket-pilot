@@ -2,7 +2,7 @@
 
 ## Testing
 
-- [ ] `npm run lint`
+- [ ] `npx eslint src`
 - [ ] `npm run typecheck`
 - [ ] `npm run build`
 - [ ] `npm run test` (if present)

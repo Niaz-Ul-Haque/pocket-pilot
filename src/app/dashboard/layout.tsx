@@ -17,7 +17,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { RecentActionsDialog } from "@/components/recent-actions-dialog"
 import { DashboardShell } from "@/components/dashboard-shell"
 import { redirect } from "next/navigation"
-import { User, Keyboard, Command } from "lucide-react"
+import { User, Keyboard, Command, Settings } from "lucide-react"
 import {
   Tooltip,
   TooltipContent,
@@ -124,6 +124,12 @@ export default async function DashboardLayout({
                   <Link href="/dashboard/account" className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
                     Account Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/account" className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

@@ -43,11 +43,18 @@ export async function PUT(
 
   try {
     const body = await request.json()
-    const { title } = body
+    const { title, is_pinned } = body
+
+    // Build update object with only provided fields
+    const updateData: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+    }
+    if (title !== undefined) updateData.title = title
+    if (is_pinned !== undefined) updateData.is_pinned = is_pinned
 
     const { data, error } = await supabaseAdmin
       .from("chat_conversations")
-      .update({ title, updated_at: new Date().toISOString() })
+      .update(updateData)
       .eq("id", id)
       .eq("user_id", session.user.id)
       .select()

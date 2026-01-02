@@ -1,8 +1,10 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useSession } from "next-auth/react"
 import { format } from "date-fns"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 import {
   MessageSquare,
   Send,
@@ -18,9 +20,40 @@ import {
   Mic,
   MicOff,
   Volume2,
-  VolumeX,
   Square,
   Settings2,
+  Pin,
+  PinOff,
+  Search,
+  ThumbsUp,
+  ThumbsDown,
+  Download,
+  FileText,
+  FileJson,
+  Zap,
+  Globe,
+  MessageCircle,
+  LayoutTemplate,
+  ChevronDown,
+  Check,
+  XCircle,
+  Edit3,
+  CreditCard,
+  Wallet,
+  List,
+  PieChart,
+  Target,
+  AlertTriangle,
+  TrendingUp,
+  PiggyBank,
+  Calendar,
+  Receipt,
+  BarChart,
+  LineChart,
+  ArrowLeftRight,
+  Heart,
+  Lightbulb,
+  type LucideIcon,
 } from "lucide-react"
 import { useSpeechRecognition, useSpeechSynthesis } from "@/hooks"
 import { Button } from "@/components/ui/button"
@@ -56,15 +89,61 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import { useChat } from "@ai-sdk/react"
 import { TextStreamChatTransport } from "ai"
-import { Check, XCircle, Edit3 } from "lucide-react"
+import {
+  SUPPORTED_LANGUAGES,
+  type ResponseSpeed,
+  type Personality,
+  type ConversationTemplate,
+  type ReactionType,
+} from "@/lib/validators/chat"
+
+// Icon mapping for templates
+const ICON_MAP: Record<string, LucideIcon> = {
+  CreditCard,
+  Wallet,
+  List,
+  PieChart,
+  Target,
+  Plus,
+  AlertTriangle,
+  TrendingUp,
+  PiggyBank,
+  Calendar,
+  Receipt,
+  FileText,
+  BarChart,
+  LineChart,
+  Search,
+  ArrowLeftRight,
+  Heart,
+  Lightbulb,
+}
 
 interface ChatConversation {
   id: string
   title: string
+  is_pinned: boolean
   created_at: string
   updated_at: string
 }
@@ -77,6 +156,18 @@ interface ChatMessage {
   created_at: string
 }
 
+interface ChatSettings {
+  response_speed: ResponseSpeed
+  language: string
+  personality: Personality
+  show_templates: boolean
+  auto_speak: boolean
+}
+
+interface MessageReactionState {
+  [messageId: string]: ReactionType | null
+}
+
 interface AIChatModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -84,7 +175,7 @@ interface AIChatModalProps {
 
 export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
   const { data: session } = useSession()
-  
+
   // Conversation state
   const [conversations, setConversations] = useState<ChatConversation[]>([])
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null)
@@ -93,13 +184,33 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
   const [showHistory, setShowHistory] = useState(true)
   const [deleteConversationId, setDeleteConversationId] = useState<string | null>(null)
   const [isNewConversation, setIsNewConversation] = useState(false)
-  
+
+  // Search state (TIER 11)
+  const [searchQuery, setSearchQuery] = useState("")
+
+  // Templates state (TIER 11)
+  const [templates, setTemplates] = useState<ConversationTemplate[]>([])
+  const [showTemplates, setShowTemplates] = useState(false)
+  const [selectedTemplateCategory, setSelectedTemplateCategory] = useState<string>("all")
+
+  // Settings state (TIER 11)
+  const [chatSettings, setChatSettings] = useState<ChatSettings>({
+    response_speed: "balanced",
+    language: "en",
+    personality: "balanced",
+    show_templates: true,
+    auto_speak: false,
+  })
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true)
+
+  // Reactions state (TIER 11)
+  const [reactions, setReactions] = useState<MessageReactionState>({})
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Voice input/output state
   const [voiceOutputEnabled, setVoiceOutputEnabled] = useState(false)
-  const [autoSpeak, setAutoSpeak] = useState(false)
 
   // Speech recognition hook
   const {
@@ -145,8 +256,8 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
   }, [isNewConversation])
 
   useEffect(() => {
-    autoSpeakRef.current = autoSpeak
-  }, [autoSpeak])
+    autoSpeakRef.current = chatSettings.auto_speak
+  }, [chatSettings.auto_speak])
 
   useEffect(() => {
     speakRef.current = speak
@@ -158,7 +269,7 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
       inputRef.current.value = transcript
     }
   }, [isListening, transcript])
-  
+
   // User info from session
   const userImage = session?.user?.image || null
   const userName = session?.user?.name || "User"
@@ -199,7 +310,7 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
       }
     },
   })
-  
+
   const isChatLoading = status === "streaming" || status === "submitted"
 
   // Scroll to bottom when messages change
@@ -214,10 +325,42 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
     }
   }, [open])
 
+  // Fetch chat settings on mount
+  const fetchChatSettings = useCallback(async () => {
+    try {
+      const res = await fetch("/api/chat/settings")
+      if (res.ok) {
+        const data = await res.json()
+        setChatSettings(data)
+      }
+    } catch (error) {
+      console.error("Failed to fetch chat settings:", error)
+    } finally {
+      setIsLoadingSettings(false)
+    }
+  }, [])
+
+  // Fetch templates on mount
+  const fetchTemplates = useCallback(async () => {
+    try {
+      const res = await fetch("/api/chat/templates")
+      if (res.ok) {
+        const data = await res.json()
+        setTemplates(data)
+      }
+    } catch (error) {
+      console.error("Failed to fetch templates:", error)
+    }
+  }, [])
+
   // Fetch conversations on mount
   const fetchConversations = useCallback(async () => {
     try {
-      const res = await fetch("/api/chat/conversations")
+      const url = new URL("/api/chat/conversations", window.location.origin)
+      if (searchQuery) {
+        url.searchParams.set("search", searchQuery)
+      }
+      const res = await fetch(url.toString())
       if (res.ok) {
         const data = await res.json()
         setConversations(data)
@@ -225,20 +368,32 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
     } catch (error) {
       console.error("Failed to fetch conversations:", error)
     }
-  }, [])
+  }, [searchQuery])
 
   useEffect(() => {
     if (open) {
       fetchConversations()
+      fetchChatSettings()
+      fetchTemplates()
     }
-  }, [open, fetchConversations])
+  }, [open, fetchConversations, fetchChatSettings, fetchTemplates])
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (open) {
+        fetchConversations()
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery, open, fetchConversations])
 
   // Load conversation messages
   const loadConversation = async (conversationId: string) => {
     setIsLoadingHistory(true)
     setCurrentConversationId(conversationId)
     setMessages([]) // Clear current chat messages
-    
+
     try {
       const res = await fetch(`/api/chat/conversations/${conversationId}/messages`)
       if (res.ok) {
@@ -264,27 +419,33 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
   // Save message to database (doesn't update local state - that comes from useChat)
   const saveMessageToDb = useCallback(async (conversationId: string, role: string, content: string) => {
     if (!content.trim()) return // Don't save empty messages
-    
+
     try {
       await fetch(`/api/chat/conversations/${conversationId}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role, content }),
       })
-      
+
       // Update conversation's updated_at in the list
       setConversations((prev) =>
         prev.map((c) =>
           c.id === conversationId
             ? { ...c, updated_at: new Date().toISOString() }
             : c
-        ).sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+        ).sort((a, b) => {
+          // Pinned first
+          if (a.is_pinned && !b.is_pinned) return -1
+          if (!a.is_pinned && b.is_pinned) return 1
+          // Then by date
+          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+        })
       )
     } catch (error) {
       console.error("Failed to save message:", error)
     }
   }, [])
-  
+
   // Keep the ref in sync
   useEffect(() => {
     saveMessageToDbRef.current = saveMessageToDb
@@ -294,14 +455,14 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
   const updateConversationTitle = useCallback(async (conversationId: string, assistantResponse: string) => {
     // Generate a title from the first user message or response
     const title = assistantResponse.slice(0, 50)
-    
+
     try {
       await fetch(`/api/chat/conversations/${conversationId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: title + (title.length >= 50 ? "..." : "") }),
       })
-      
+
       setConversations((prev) =>
         prev.map((c) =>
           c.id === conversationId
@@ -313,10 +474,10 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
       console.error("Failed to update title:", error)
     }
   }, [])
-  
+
   // Ref for updateConversationTitle
   const updateConversationTitleRef = useRef<(conversationId: string, content: string) => Promise<void>>()
-  
+
   useEffect(() => {
     updateConversationTitleRef.current = updateConversationTitle
   }, [updateConversationTitle])
@@ -327,7 +488,7 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
       const res = await fetch(`/api/chat/conversations/${conversationId}`, {
         method: "DELETE",
       })
-      
+
       if (res.ok) {
         setConversations((prev) => prev.filter((c) => c.id !== conversationId))
         if (currentConversationId === conversationId) {
@@ -340,6 +501,112 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
       console.error("Failed to delete conversation:", error)
     } finally {
       setDeleteConversationId(null)
+    }
+  }
+
+  // Toggle pin conversation (TIER 11)
+  const togglePinConversation = async (conversationId: string, currentPinned: boolean) => {
+    try {
+      const res = await fetch(`/api/chat/conversations/${conversationId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_pinned: !currentPinned }),
+      })
+
+      if (res.ok) {
+        setConversations((prev) =>
+          prev.map((c) =>
+            c.id === conversationId
+              ? { ...c, is_pinned: !currentPinned }
+              : c
+          ).sort((a, b) => {
+            // Pinned first
+            if (a.is_pinned && !b.is_pinned) return -1
+            if (!a.is_pinned && b.is_pinned) return 1
+            // Then by date
+            return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+          })
+        )
+      }
+    } catch (error) {
+      console.error("Failed to toggle pin:", error)
+    }
+  }
+
+  // Update chat settings (TIER 11)
+  const updateChatSettings = async (updates: Partial<ChatSettings>) => {
+    const newSettings = { ...chatSettings, ...updates }
+    setChatSettings(newSettings)
+
+    try {
+      await fetch("/api/chat/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      })
+    } catch (error) {
+      console.error("Failed to update settings:", error)
+    }
+  }
+
+  // Add reaction to message (TIER 11)
+  const addReaction = async (messageId: string, reactionType: ReactionType) => {
+    const currentReaction = reactions[messageId]
+
+    // Toggle off if same reaction
+    if (currentReaction === reactionType) {
+      setReactions((prev) => ({ ...prev, [messageId]: null }))
+      try {
+        await fetch(`/api/chat/reactions?message_id=${messageId}`, {
+          method: "DELETE",
+        })
+      } catch (error) {
+        console.error("Failed to remove reaction:", error)
+      }
+      return
+    }
+
+    // Add new reaction
+    setReactions((prev) => ({ ...prev, [messageId]: reactionType }))
+    try {
+      await fetch("/api/chat/reactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message_id: messageId, reaction_type: reactionType }),
+      })
+    } catch (error) {
+      console.error("Failed to add reaction:", error)
+    }
+  }
+
+  // Export conversation (TIER 11)
+  const exportConversation = async (exportType: "text" | "pdf" | "json") => {
+    try {
+      const res = await fetch("/api/chat/export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          conversation_id: currentConversationId,
+          export_type: exportType,
+        }),
+      })
+
+      if (res.ok) {
+        const blob = await res.blob()
+        const contentDisposition = res.headers.get("Content-Disposition")
+        const filename = contentDisposition?.split("filename=")[1]?.replace(/"/g, "") || `chat_export.${exportType}`
+
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href = url
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+      }
+    } catch (error) {
+      console.error("Failed to export:", error)
     }
   }
 
@@ -365,6 +632,15 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
     [isSpeaking, cancelSpeech, speak]
   )
 
+  // Handle template selection
+  const handleTemplateSelect = (template: ConversationTemplate) => {
+    if (inputRef.current) {
+      inputRef.current.value = template.prompt
+      inputRef.current.focus()
+    }
+    setShowTemplates(false)
+  }
+
   // Handle send message
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -387,7 +663,7 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ title: input.slice(0, 50) + (input.length >= 50 ? "..." : "") }),
         })
-        
+
         if (res.ok) {
           const conversation = await res.json()
           setConversations((prev) => [conversation, ...prev])
@@ -473,6 +749,18 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
     }
   }, [])
 
+  // Filter templates by category
+  const filteredTemplates = useMemo(() => {
+    if (selectedTemplateCategory === "all") return templates
+    return templates.filter((t) => t.category === selectedTemplateCategory)
+  }, [templates, selectedTemplateCategory])
+
+  // Get unique template categories
+  const templateCategories = useMemo(() => {
+    const cats = new Set(templates.map((t) => t.category))
+    return ["all", ...Array.from(cats)]
+  }, [templates])
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -499,12 +787,25 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
-              
+
+              {/* Search (TIER 11) */}
+              <div className="p-2 border-b">
+                <div className="relative">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search conversations..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-8 h-8 text-sm"
+                  />
+                </div>
+              </div>
+
               <ScrollArea className="flex-1 min-h-0">
                 <div className="p-2 space-y-1">
                   {conversations.length === 0 ? (
                     <p className="text-xs text-muted-foreground text-center py-4">
-                      No conversations yet
+                      {searchQuery ? "No matching conversations" : "No conversations yet"}
                     </p>
                   ) : (
                     conversations.map((conv) => (
@@ -518,9 +819,12 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
                         )}
                         onClick={() => loadConversation(conv.id)}
                       >
+                        {conv.is_pinned && (
+                          <Pin className="h-3 w-3 shrink-0 text-primary" />
+                        )}
                         <MessageSquare className="h-4 w-4 shrink-0" />
                         <div className="flex-1 min-w-0 overflow-hidden">
-                          <p className="text-sm font-medium truncate max-w-[160px]">
+                          <p className="text-sm font-medium truncate max-w-[140px]">
                             {conv.title.length > 20
                               ? conv.title.slice(0, 20) + "..."
                               : conv.title}
@@ -529,17 +833,34 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
                             {format(new Date(conv.updated_at), "MMM d, h:mm a")}
                           </p>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 shrink-0 opacity-100"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setDeleteConversationId(conv.id)
-                          }}
-                        >
-                          <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
-                        </Button>
+                        <div className="flex items-center gap-0.5">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              togglePinConversation(conv.id, conv.is_pinned)
+                            }}
+                          >
+                            {conv.is_pinned ? (
+                              <PinOff className="h-3 w-3 text-muted-foreground" />
+                            ) : (
+                              <Pin className="h-3 w-3 text-muted-foreground" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 shrink-0 opacity-100"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setDeleteConversationId(conv.id)
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                          </Button>
+                        </div>
                       </div>
                     ))
                   )}
@@ -574,21 +895,146 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
                     </DialogTitle>
                   </div>
                   <div className="flex items-center gap-2">
-                    {/* Voice Settings */}
-                    {(isSpeechRecognitionSupported || isSpeechSynthesisSupported) && (
-                      <Popover>
-                        <PopoverTrigger asChild>
+                    {/* Templates Toggle (TIER 11) */}
+                    {chatSettings.show_templates && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant={showTemplates ? "secondary" : "ghost"}
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => setShowTemplates(!showTemplates)}
+                            >
+                              <LayoutTemplate className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Conversation templates</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+
+                    {/* Export Menu (TIER 11) */}
+                    {currentConversationId && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <Settings2 className="h-4 w-4" />
+                            <Download className="h-4 w-4" />
                           </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-64" align="end">
-                          <div className="space-y-4">
-                            <h4 className="font-medium text-sm">Voice Settings</h4>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Export Chat</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => exportConversation("text")}>
+                            <FileText className="h-4 w-4 mr-2" />
+                            Text (.txt)
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => exportConversation("json")}>
+                            <FileJson className="h-4 w-4 mr-2" />
+                            JSON (.json)
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => exportConversation("pdf")}>
+                            <FileText className="h-4 w-4 mr-2" />
+                            HTML (for PDF)
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+
+                    {/* Settings (TIER 11 Enhanced) */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Settings2 className="h-4 w-4" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80" align="end">
+                        <div className="space-y-4">
+                          <h4 className="font-medium text-sm">AI Settings</h4>
+
+                          {/* Response Speed (TIER 11) */}
+                          <div className="space-y-2">
+                            <Label className="text-xs flex items-center gap-2">
+                              <Zap className="h-3 w-3" />
+                              Response Style
+                            </Label>
+                            <Select
+                              value={chatSettings.response_speed}
+                              onValueChange={(v) => updateChatSettings({ response_speed: v as ResponseSpeed })}
+                            >
+                              <SelectTrigger className="h-8 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="fast">Fast (Concise)</SelectItem>
+                                <SelectItem value="balanced">Balanced</SelectItem>
+                                <SelectItem value="detailed">Detailed (Thorough)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* Language (TIER 11) */}
+                          <div className="space-y-2">
+                            <Label className="text-xs flex items-center gap-2">
+                              <Globe className="h-3 w-3" />
+                              Language
+                            </Label>
+                            <Select
+                              value={chatSettings.language}
+                              onValueChange={(v) => updateChatSettings({ language: v })}
+                            >
+                              <SelectTrigger className="h-8 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {SUPPORTED_LANGUAGES.map((lang) => (
+                                  <SelectItem key={lang.code} value={lang.code}>
+                                    {lang.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* Personality (TIER 11) */}
+                          <div className="space-y-2">
+                            <Label className="text-xs flex items-center gap-2">
+                              <MessageCircle className="h-3 w-3" />
+                              Personality
+                            </Label>
+                            <Select
+                              value={chatSettings.personality}
+                              onValueChange={(v) => updateChatSettings({ personality: v as Personality })}
+                            >
+                              <SelectTrigger className="h-8 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="formal">Formal (Professional)</SelectItem>
+                                <SelectItem value="balanced">Balanced</SelectItem>
+                                <SelectItem value="casual">Casual (Friendly)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="border-t pt-4 space-y-3">
+                            {/* Show Templates */}
+                            <div className="flex items-center justify-between">
+                              <Label htmlFor="show-templates" className="text-xs">
+                                Show templates
+                              </Label>
+                              <Switch
+                                id="show-templates"
+                                checked={chatSettings.show_templates}
+                                onCheckedChange={(v) => updateChatSettings({ show_templates: v })}
+                              />
+                            </div>
+
+                            {/* Voice Settings */}
                             {isSpeechSynthesisSupported && (
                               <>
                                 <div className="flex items-center justify-between">
-                                  <Label htmlFor="voice-output" className="text-sm">
+                                  <Label htmlFor="voice-output" className="text-xs">
                                     Enable voice output
                                   </Label>
                                   <Switch
@@ -598,32 +1044,29 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
                                   />
                                 </div>
                                 <div className="flex items-center justify-between">
-                                  <Label htmlFor="auto-speak" className="text-sm">
+                                  <Label htmlFor="auto-speak" className="text-xs">
                                     Auto-speak responses
                                   </Label>
                                   <Switch
                                     id="auto-speak"
-                                    checked={autoSpeak}
-                                    onCheckedChange={setAutoSpeak}
+                                    checked={chatSettings.auto_speak}
+                                    onCheckedChange={(v) => updateChatSettings({ auto_speak: v })}
                                     disabled={!voiceOutputEnabled}
                                   />
                                 </div>
                               </>
                             )}
-                            {!isSpeechRecognitionSupported && (
-                              <p className="text-xs text-muted-foreground">
-                                Voice input not supported in this browser.
-                              </p>
-                            )}
-                            {!isSpeechSynthesisSupported && (
-                              <p className="text-xs text-muted-foreground">
-                                Voice output not supported in this browser.
-                              </p>
-                            )}
                           </div>
-                        </PopoverContent>
-                      </Popover>
-                    )}
+
+                          {!isSpeechRecognitionSupported && (
+                            <p className="text-xs text-muted-foreground">
+                              Voice input not supported in this browser.
+                            </p>
+                          )}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+
                     {currentConversationId && (
                       <Button variant="outline" size="sm" onClick={startNewConversation}>
                         <Plus className="h-4 w-4 mr-1" />
@@ -639,6 +1082,41 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
                   </div>
                 </div>
               </DialogHeader>
+
+              {/* Templates Panel (TIER 11) */}
+              {showTemplates && (
+                <div className="border-b bg-muted/20 p-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs font-medium text-muted-foreground">Quick Actions:</span>
+                    <Tabs value={selectedTemplateCategory} onValueChange={setSelectedTemplateCategory}>
+                      <TabsList className="h-7">
+                        {templateCategories.map((cat) => (
+                          <TabsTrigger key={cat} value={cat} className="text-xs px-2 py-1 capitalize">
+                            {cat}
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+                    </Tabs>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {filteredTemplates.slice(0, 8).map((template) => {
+                      const IconComponent = template.icon ? ICON_MAP[template.icon] : Sparkles
+                      return (
+                        <Button
+                          key={template.id}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs h-7 gap-1"
+                          onClick={() => handleTemplateSelect(template)}
+                        >
+                          {IconComponent && <IconComponent className="h-3 w-3" />}
+                          {template.title}
+                        </Button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Messages */}
               <ScrollArea className="flex-1 min-h-0 p-4">
@@ -701,30 +1179,120 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
                               : "bg-muted"
                           )}
                         >
-                          <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                          {/* Speak button for assistant messages */}
-                          {msg.role !== "user" && voiceOutputEnabled && isSpeechSynthesisSupported && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="absolute -bottom-3 -right-3 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity bg-background shadow-sm border"
-                                    onClick={() => handleSpeakMessage(msg.content)}
-                                  >
-                                    {isSpeaking ? (
-                                      <Square className="h-3 w-3" />
+                          {/* Markdown Rendering (TIER 11) */}
+                          {msg.role === "assistant" ? (
+                            <div className="prose prose-sm dark:prose-invert max-w-none">
+                              <ReactMarkdown
+                                remarkPlugins={[remarkGfm]}
+                                components={{
+                                  p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                                  ul: ({ children }) => <ul className="list-disc list-inside mb-2">{children}</ul>,
+                                  ol: ({ children }) => <ol className="list-decimal list-inside mb-2">{children}</ol>,
+                                  li: ({ children }) => <li className="mb-1">{children}</li>,
+                                  table: ({ children }) => (
+                                    <div className="overflow-x-auto my-2">
+                                      <table className="min-w-full border-collapse border border-border text-xs">
+                                        {children}
+                                      </table>
+                                    </div>
+                                  ),
+                                  th: ({ children }) => (
+                                    <th className="border border-border px-2 py-1 bg-muted font-medium">
+                                      {children}
+                                    </th>
+                                  ),
+                                  td: ({ children }) => (
+                                    <td className="border border-border px-2 py-1">{children}</td>
+                                  ),
+                                  code: ({ children, className }) => {
+                                    const isInline = !className
+                                    return isInline ? (
+                                      <code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">
+                                        {children}
+                                      </code>
                                     ) : (
-                                      <Volume2 className="h-3 w-3" />
-                                    )}
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  {isSpeaking ? "Stop speaking" : "Read aloud"}
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
+                                      <code className="block bg-muted p-2 rounded text-xs font-mono overflow-x-auto">
+                                        {children}
+                                      </code>
+                                    )
+                                  },
+                                  strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                                  em: ({ children }) => <em className="italic">{children}</em>,
+                                }}
+                              >
+                                {msg.content}
+                              </ReactMarkdown>
+                            </div>
+                          ) : (
+                            <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                          )}
+
+                          {/* Message Actions (TIER 11) */}
+                          {msg.role === "assistant" && (
+                            <div className="absolute -bottom-3 right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                              {/* Reactions */}
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className={cn(
+                                        "h-6 w-6 bg-background shadow-sm border",
+                                        reactions[msg.id] === "thumbs_up" && "text-green-600 bg-green-50"
+                                      )}
+                                      onClick={() => addReaction(msg.id, "thumbs_up")}
+                                    >
+                                      <ThumbsUp className="h-3 w-3" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Helpful</TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className={cn(
+                                        "h-6 w-6 bg-background shadow-sm border",
+                                        reactions[msg.id] === "thumbs_down" && "text-red-600 bg-red-50"
+                                      )}
+                                      onClick={() => addReaction(msg.id, "thumbs_down")}
+                                    >
+                                      <ThumbsDown className="h-3 w-3" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Not helpful</TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+
+                              {/* Speak button */}
+                              {voiceOutputEnabled && isSpeechSynthesisSupported && (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6 bg-background shadow-sm border"
+                                        onClick={() => handleSpeakMessage(msg.content)}
+                                      >
+                                        {isSpeaking ? (
+                                          <Square className="h-3 w-3" />
+                                        ) : (
+                                          <Volume2 className="h-3 w-3" />
+                                        )}
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      {isSpeaking ? "Stop speaking" : "Read aloud"}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
+                            </div>
                           )}
                         </div>
                         {msg.role === "user" && (
@@ -800,6 +1368,7 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
                         )}
                       </div>
                     )}
+                    {/* Enhanced Typing Indicator (TIER 11) */}
                     {isChatLoading && (
                       <div className="flex gap-3">
                         <div className="p-2 rounded-full bg-primary/10 h-8 w-8 flex items-center justify-center shrink-0">
@@ -807,8 +1376,12 @@ export function AIChatModal({ open, onOpenChange }: AIChatModalProps) {
                         </div>
                         <div className="bg-muted p-3 rounded-lg">
                           <div className="flex items-center gap-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span className="text-sm">Thinking...</span>
+                            <div className="flex gap-1">
+                              <span className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                              <span className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                              <span className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                            </div>
+                            <span className="text-sm text-muted-foreground">Thinking...</span>
                           </div>
                         </div>
                       </div>

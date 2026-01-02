@@ -1,6 +1,6 @@
 # Implementation Progress
 
-**Last Updated:** 2025-12-28
+**Last Updated:** 2026-01-01
 
 Track story completion status. This file reflects the actual implementation state.
 
@@ -113,6 +113,10 @@ Track story completion status. This file reflects the actual implementation stat
 | public.ai_notifications | ✅ | ✅ | 016_tier9_ai_features.sql | Proactive AI notifications |
 | public.ai_learning_rules | ✅ | ✅ | 016_tier9_ai_features.sql | User-taught AI rules |
 | public.search_history | ✅ | ✅ | 016_tier9_ai_features.sql | Natural language search history |
+| public.message_reactions | ✅ | ✅ | 017_tier11_chat_ux.sql | AI message feedback (thumbs up/down) |
+| public.chat_settings | ✅ | ✅ | 017_tier11_chat_ux.sql | User AI chat preferences |
+| public.conversation_templates | ✅ | ✅ | 017_tier11_chat_ux.sql | System and custom chat templates |
+| public.chat_exports | ✅ | ✅ | 017_tier11_chat_ux.sql | Chat export history |
 
 ---
 
@@ -196,6 +200,11 @@ Track story completion status. This file reflects the actual implementation stat
 | /api/ai-calendar | GET | ✅ | AI financial calendar with payment scheduling |
 | /api/ai-learning | GET, POST, DELETE | ✅ | AI learning rules (teach via conversation) |
 | /api/ai-export | GET, POST | ✅ | AI data export/import |
+| /api/chat/settings | GET, PUT | ✅ | User AI chat preferences |
+| /api/chat/templates | GET, POST | ✅ | Conversation templates |
+| /api/chat/templates/[id] | GET, PUT, DELETE | ✅ | Individual template operations |
+| /api/chat/reactions | GET, POST, DELETE | ✅ | Message reactions |
+| /api/chat/export | GET, POST | ✅ | Export chat conversations |
 
 ---
 
@@ -309,6 +318,8 @@ src/
 | 010_transfer_linking.sql | Transfer transaction linking | ✅ Ready to apply |
 | 011_tags.sql | Tags system | ✅ Ready to apply |
 | 012_recurring_transactions.sql | Recurring transactions + link column | ✅ Ready to apply |
+| 016_tier9_ai_features.sql | AI memory, merchants, predictions, summaries, notifications, learning rules, search | ✅ Ready to apply |
+| 017_tier11_chat_ux.sql | Chat settings, templates, reactions, exports, conversation pinning | ✅ Ready to apply |
 
 ---
 
@@ -512,6 +523,7 @@ Comprehensive AI analytics endpoint providing:
 | 2025-12-28 | Claude | Updated next-tasks.md with v1.3+ AI-focused roadmap (8 new tiers, 60+ new features). Updated README.md for v1.2. |
 | 2025-12-28 | Claude | TIER 8 AI Core Improvements (8/8): AI confirmation acknowledgement fix, tool error recovery, context memory (within session), quick reply suggestions, AI response improvements with financial context, fallback responses, request validation, multi-step action support. Bug fixes: chat history title truncation, AI expense query responses. |
 | 2025-12-28 | Claude | TIER 9 Advanced AI Capabilities (11/12 - 1 Parked): Weekly AI Summary widget, Monthly AI Report with PDF export, AI Chat Memory (Cross-Session), Proactive AI Notifications (budget warnings, bill reminders, savings opportunities), Smart Merchant Recognition with pattern matching, AI-Powered Natural Language Search, Spending Prediction Accuracy Tracking, AI Financial Calendar with payment scheduling, AI Voice Commands enhancement, AI Learning Mode (teach AI via conversation), AI Export/Import for preferences and data. Parked: Receipt OCR. New database migration 016_tier9_ai_features.sql with 7 tables. Build passes with no lint errors. |
+| 2026-01-01 | Claude | TIER 11 AI Chat UX Enhancements (10/10): Conversation Templates (18 system templates, 7 categories, floating selector panel), AI Typing Indicator (bouncing dots animation), Message Reactions (thumbs up/down with visual feedback), AI Response Formatting (react-markdown with GFM, tables, code blocks), Conversation Search (debounced, server-side), AI Response Speed Setting (Fast/Balanced/Detailed), Multi-Language Support (10 languages), Conversation Pinning (sort pinned first), AI Personality Settings (Formal/Balanced/Casual), Chat Export (Text/JSON/HTML). New database migration 017_tier11_chat_ux.sql with 5 new tables/columns. New API routes: /api/chat/settings, /api/chat/templates, /api/chat/reactions, /api/chat/export. Build passes with no lint errors. |
 
 
 

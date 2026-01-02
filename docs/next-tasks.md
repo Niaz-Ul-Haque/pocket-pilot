@@ -6,6 +6,20 @@ This document outlines the comprehensive feature roadmap for Pocket Pilot, organ
 
 ## Recently Completed
 
+### v1.4 - Complete (TIER 11 AI Chat UX)
+
+**TIER 11: AI Chat UX Enhancements** - 10/10 Complete
+- Conversation Templates (18 system templates across 7 categories)
+- AI Typing Indicator (enhanced bouncing dots animation)
+- Message Reactions (thumbs up/down with visual feedback)
+- AI Response Formatting (markdown with tables, code blocks, lists)
+- Conversation Search (debounced search in sidebar)
+- AI Response Speed Setting (Fast/Balanced/Detailed)
+- Multi-Language Support (10 languages)
+- Conversation Pinning (pin important conversations)
+- AI Personality Settings (Formal/Balanced/Casual)
+- Chat Export (Text, JSON, HTML formats)
+
 ### v1.3 - Complete (TIER 9 AI Features)
 
 **TIER 9: Advanced AI Capabilities** - 11/12 Complete (1 Parked)
@@ -232,25 +246,95 @@ Bug Fixes (TIER 8) - ✅ All Complete:
 
 ## TIER 11: AI Chat UX Enhancements
 
+**Priority: HIGH - Complete**
+
 | Feature | Description | Priority | Status |
 |---------|-------------|----------|--------|
-| Conversation Templates | Pre-built prompts for common tasks (add expense, check budget, etc.) | High | Pending |
-| AI Typing Indicator | Better visual feedback during AI response generation | Medium | Pending |
-| Message Reactions | Thumbs up/down on AI messages for feedback | Medium | Pending |
-| AI Response Formatting | Better markdown rendering with tables, charts inline | Medium | Pending |
-| Conversation Search | Search through past AI conversations | Medium | Pending |
-| AI Response Speed Setting | Fast (shorter) vs Detailed (longer) response toggle | Low | Pending |
-| Multi-Language Support | AI responds in user's preferred language | Low | Pending |
-| Conversation Pinning | Pin important conversations for quick access | Low | Pending |
-| AI Personality Settings | Formal vs Casual AI communication style toggle | Low | Pending |
-| Chat Export | Export conversation history as text/PDF | Low | Pending |
+| Conversation Templates | Pre-built prompts for common tasks (add expense, check budget, etc.) | High | ✅ Complete |
+| AI Typing Indicator | Better visual feedback during AI response generation | Medium | ✅ Complete |
+| Message Reactions | Thumbs up/down on AI messages for feedback | Medium | ✅ Complete |
+| AI Response Formatting | Better markdown rendering with tables, charts inline | Medium | ✅ Complete |
+| Conversation Search | Search through past AI conversations | Medium | ✅ Complete |
+| AI Response Speed Setting | Fast (shorter) vs Detailed (longer) response toggle | Low | ✅ Complete |
+| Multi-Language Support | AI responds in user's preferred language | Low | ✅ Complete |
+| Conversation Pinning | Pin important conversations for quick access | Low | ✅ Complete |
+| AI Personality Settings | Formal vs Casual AI communication style toggle | Low | ✅ Complete |
+| Chat Export | Export conversation history as text/PDF | Low | ✅ Complete |
 
 ### Implementation Details
 
-**Conversation Templates:**
-- Floating template selector in chat
-- Templates: "Add an expense", "Check my budget", "How much did I spend on X?", "Add to savings goal", "Upcoming bills"
+**Conversation Templates (✅ Complete):**
+- Floating template selector panel in chat header
+- 18 system templates across 7 categories: general, transactions, budgets, goals, bills, reports, analysis
+- Category tabs for easy navigation
 - Clicking template pre-fills message input
+- Custom template creation support via API
+
+**AI Typing Indicator (✅ Complete):**
+- Enhanced bouncing dots animation with "Thinking..." text
+- Bot avatar shown during response generation
+- Smooth animation with staggered delays
+
+**Message Reactions (✅ Complete):**
+- Thumbs up/down buttons on assistant messages (hover to reveal)
+- Toggle reaction on/off
+- Reactions stored in `message_reactions` table
+- Visual feedback with green/red highlight when selected
+
+**AI Response Formatting (✅ Complete):**
+- React-markdown with remark-gfm for GitHub-flavored markdown
+- Support for tables, lists, code blocks, bold, italic
+- Custom styling for tables with borders
+- Inline code and block code rendering
+
+**Conversation Search (✅ Complete):**
+- Search input in conversation history sidebar
+- Debounced search (300ms) for performance
+- Server-side filtering by title
+- "No matching conversations" message when empty
+
+**AI Response Speed Setting (✅ Complete):**
+- Three options: Fast (Concise), Balanced, Detailed (Thorough)
+- Settings stored in `chat_settings` table
+- Applied to system prompt as style instructions
+- Accessible via settings popover in chat header
+
+**Multi-Language Support (✅ Complete):**
+- 10 languages: English, Spanish, French, German, Portuguese, Chinese, Japanese, Korean, Arabic, Hindi
+- Language preference stored in chat settings
+- AI responds in selected language via system prompt
+
+**Conversation Pinning (✅ Complete):**
+- Pin/unpin button on conversation items
+- Pinned conversations sorted first
+- Pin icon indicator on pinned items
+- `is_pinned` column added to `chat_conversations` table
+
+**AI Personality Settings (✅ Complete):**
+- Three options: Formal (Professional), Balanced, Casual (Friendly)
+- Affects AI communication style via system prompt
+- Stored in user's chat settings
+
+**Chat Export (✅ Complete):**
+- Export current conversation as Text, JSON, or HTML (for PDF)
+- Download triggered via export dropdown menu
+- Includes conversation title, timestamps, all messages
+- Export history tracked in `chat_exports` table
+
+### Database Migration (017_tier11_chat_ux.sql)
+
+- `is_pinned` column added to `chat_conversations`
+- `message_reactions` table for feedback tracking
+- `chat_settings` table for AI preferences
+- `conversation_templates` table with 18 system templates
+- `chat_exports` table for export history
+
+### New API Routes
+
+- `GET/PUT /api/chat/settings` - User chat preferences
+- `GET/POST /api/chat/templates` - Template management
+- `GET/POST/DELETE /api/chat/reactions` - Message reactions
+- `POST /api/chat/export` - Export conversations
 
 ---
 

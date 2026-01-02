@@ -3,7 +3,14 @@ import { createOpenAICompatible } from "@ai-sdk/openai-compatible"
 import { z } from "zod"
 import { auth } from "@/lib/auth"
 import { supabaseAdmin } from "@/lib/supabase"
-import { suggestCategoryFromDescription } from "@/lib/validators/chat"
+import {
+  suggestCategoryFromDescription,
+  RESPONSE_SPEED_INSTRUCTIONS,
+  PERSONALITY_INSTRUCTIONS,
+  LANGUAGE_INSTRUCTIONS,
+  type ResponseSpeed,
+  type Personality,
+} from "@/lib/validators/chat"
 
 // Create Z.AI client using OpenAI-compatible provider
 const zai = createOpenAICompatible({
@@ -93,7 +100,7 @@ export async function POST(req: Request) {
   const startOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split("T")[0]
   const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0).toISOString().split("T")[0]
 
-  const [categoriesRes, accountsRes, thisMonthTxRes, lastMonthTxRes, budgetsRes, goalsRes, billsRes, memoriesRes, learningRulesRes] = await Promise.all([
+  const [categoriesRes, accountsRes, thisMonthTxRes, lastMonthTxRes, budgetsRes, goalsRes, billsRes, memoriesRes, learningRulesRes, chatSettingsRes] = await Promise.all([
     supabaseAdmin
       .from("categories")
       .select("id, name, type")
@@ -148,6 +155,12 @@ export async function POST(req: Request) {
       .eq("is_active", true)
       .order("priority", { ascending: false })
       .limit(20),
+    // Chat Settings (TIER 11)
+    supabaseAdmin
+      .from("chat_settings")
+      .select("response_speed, language, personality")
+      .eq("user_id", session.user.id)
+      .single(),
   ])
 
   const categories = categoriesRes.data || []
@@ -159,6 +172,20 @@ export async function POST(req: Request) {
   const bills = billsRes.data || []
   const memories = memoriesRes?.data || []
   const learningRules = learningRulesRes?.data || []
+
+  // Chat settings with defaults (TIER 11)
+  const chatSettings = chatSettingsRes?.data || {
+    response_speed: "balanced" as ResponseSpeed,
+    language: "en",
+    personality: "balanced" as Personality,
+  }
+
+  // Build style instructions based on user settings
+  const styleInstructions = `
+COMMUNICATION STYLE (User Preferences):
+${RESPONSE_SPEED_INSTRUCTIONS[chatSettings.response_speed as ResponseSpeed]}
+${PERSONALITY_INSTRUCTIONS[chatSettings.personality as Personality]}
+${LANGUAGE_INSTRUCTIONS[chatSettings.language] || LANGUAGE_INSTRUCTIONS.en}`
 
   // Build AI memory context
   const memoryContext = memories.length > 0
@@ -293,6 +320,7 @@ Today's date: ${new Date().toISOString().split("T")[0]}
 ${financialContext}
 ${memoryContext}
 ${rulesContext}
+${styleInstructions}
 
 ANSWERING QUESTIONS ABOUT FINANCES:
 When users ask questions like "how are my expenses looking?", "what's my spending like?", or "how am I doing financially?":
